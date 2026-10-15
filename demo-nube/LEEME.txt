@@ -1,0 +1,5 @@
+Demostración con datos SINTÉTICOS (sin personas reales).
+
+1) Suba esta carpeta a un repositorio de GitHub.
+2) En share.streamlit.io: New app -> elija el repositorio -> Main file path: dashboard/app.py.
+3) En Advanced settings elija Python 3.11 o 3.12. Si pide restringir el acceso, use 'Share' para invitar solo a correos autorizados.
