@@ -6,6 +6,10 @@ secondaryBackgroundColor = "#F1F3F6"
 textColor = "#1B2430"
 font = "sans serif"
 
+[client]
+# Oculta el menú de ajustes (donde cada usuario podría cambiar a tema oscuro).
+toolbarMode = "minimal"
+
 [browser]
 gatherUsageStats = false
 
