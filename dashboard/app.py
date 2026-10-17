@@ -269,6 +269,16 @@ def base_layout(fig, titulo: str, alto: int, **kw) -> None:
     fig.update_yaxes(gridcolor="#EEF0F3", automargin=True)
 
 
+def desplegable_multiple(etiqueta: str, opciones: list, clave: str, ayuda: str = "") -> list:
+    """Selección múltiple en un menú desplegable (en vez del cuadro de etiquetas): un botón que abre las casillas."""
+    marcadas = [o for o in opciones if st.session_state.get(f"{clave}-{o}", True)]
+    st.sidebar.markdown(f"<div style='font-size:.85rem;margin-bottom:-.2rem'>{etiqueta}</div>", unsafe_allow_html=True)
+    with st.sidebar.popover(f"{len(marcadas)} de {len(opciones)} seleccionados", use_container_width=True, help=ayuda or None):
+        for o in opciones:
+            st.checkbox(o, value=True, key=f"{clave}-{o}")
+    return [o for o in opciones if st.session_state.get(f"{clave}-{o}", True)]
+
+
 # ============================================================================ filtros
 st.sidebar.markdown("### Filtros")
 dx_all = MART["diagnostico"].value_counts().index.tolist()
@@ -315,9 +325,9 @@ VAR_Q = st.sidebar.selectbox("Cuantiles de", list(VARIABLES_Q), index=0,
 BASE_Q = df.set_index("pacienteojoreingreso")[VARIABLES_Q[VAR_Q]]
 GRUPO_Q = L.grupo_cuantil(BASE_Q)
 TUKEY_Q = L.tukey(BASE_Q)
-GRUPOS_Q = st.sidebar.multiselect("Grupo (cuantil)", L.GRUPOS_CUANTIL, default=L.GRUPOS_CUANTIL,
-                                  help="Bigote abajo: del límite inferior a Q1 · Caja: Q1 a Q3 · Bigote arriba: Q3 al límite superior · "
-                                       "Atípicos: fuera de los bigotes.")
+GRUPOS_Q = desplegable_multiple(
+    "Grupo (cuantil)", L.GRUPOS_CUANTIL, "gq",
+    "Bigote abajo: del límite inferior a Q1 · Caja: Q1 a Q3 · Bigote arriba: Q3 al límite superior · Atípicos: fuera de los bigotes.")
 if TUKEY_Q:
     cuentas_q = GRUPO_Q.value_counts()
     st.sidebar.caption(f"{VAR_Q}: Q1 = {L.f_num(TUKEY_Q['q1'])} · Q3 = {L.f_num(TUKEY_Q['q3'])} · bigotes [{L.f_num(TUKEY_Q['lim_inf'])}; "
