@@ -149,7 +149,7 @@ GRUPO_AJUSTADO_EXPLICITO = {
 PREFIJO_GRUPO = {"Tipo de tratamiento": "TipoTto", "Consultas": "Cons", "Tipo de ayuda": "TipoAyuda"}
 
 # --------------------------------------------------------------------------- mart / tablero
-OPORTUNIDAD_INICIO_MAX_DIAS = 30   # SUPUESTO: inicio oportuno si primera inyección <= 30 d del diagnóstico
+OPORTUNIDAD_INICIO_MAX_DIAS = 15   # Meta del experto (revisión 28-oct-2026): inicio oportuno si primera inyección <= 15 d del diagnóstico
 MEDICAMENTO_LABEL = "MED{codigo}"  # la propuesta muestra los medicamentos anonimizados (MED1, MED2...)
 
 

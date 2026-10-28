@@ -188,6 +188,9 @@ def kpis(df: pd.DataFrame) -> Dict[str, Tuple[float, int]]:
         out[c] = media(pac, c)
     if config.RESPONDEDOR_PRUEBA is not None:
         out["respondedor"] = (float(config.RESPONDEDOR_PRUEBA), out["respondedor"][1] or len(d))
+    # Se recalcula con el umbral vigente (config) y no con la marca guardada en la corrida, que pudo usar otro umbral
+    dias = d["Oportunidad_inicio_tto"]
+    d["oportunidad_ok"] = np.where(dias.isna(), np.nan, (dias <= config.OPORTUNIDAD_INICIO_MAX_DIAS).astype(float))
     out["oportuno"] = porcentaje(d, "oportunidad_ok")
     out["carga"] = porcentaje(d, "adherencia_carga")
     out["adh16"] = porcentaje(d, "Adherencia_final_16")
@@ -280,6 +283,8 @@ PUNTOS_ESPAGUETI = [("LB", None), ("S16", 16), ("S52", 52), ("S104", 104)]
 UMBRAL_MEJORA_LETRAS = 5
 # Ejemplo ilustrativo para la pestaña de metodología: tres ojos INVENTADOS (no son pacientes) con la AV en letras ETDRS en LB / S16 / S52 / S104.
 EJEMPLO_AV = [("Ojo A", [45, 55, 60, 62]), ("Ojo B", [55, 57, 53, 56]), ("Ojo C", [60, 52, 48, 45])]
+# Equivalencia Snellen (pies) -> letras ETDRS y logMAR, de 20/20 a 20/800 (la misma tabla que usa el pipeline para convertir)
+EQUIV_SNELLEN = [(f"20/{d:g}", letras, round(float(np.log10(d / 20)), 1)) for d, letras in config.SNELLEN_A_ETDRS.items() if 20 <= d <= 800]
 CRITERIOS_ESPAGUETI = ["Aleatoria (reproducible)", "Mayor mejora (Δ AV final)", "Mayor caída (Δ AV final)",
                        "Más seguimiento (con S104)"]
 
@@ -403,20 +408,30 @@ def f_millones(v: Optional[float]) -> str:
     return "—" if v is None or pd.isna(v) else "$ " + f_num(v / 1e6, 1) + " M"
 
 
-# ------------------------------------------------------------------ rangos de AV inicial (cortes fijos del experto; coinciden con los cuartiles de P1)
-BANDAS_AV = ["AV baja (0 a 29)", "AV media (30 a 64)", "AV alta (65 a 85)"]
+# ------------------------------------------------------------------ rangos de AV inicial (cuartiles del prestador)
+BANDAS_AV = ["AV baja", "AV media", "AV alta"]
 
 
-def banda_av(serie: pd.Series) -> pd.Series:
-    """AV baja: 0 a <30 · AV media: 30 a <65 · AV alta: 65 o más (el rango de la propuesta llega a 85). Sin dato -> NaN."""
+def cortes_av(mart: pd.DataFrame) -> Tuple[float, float]:
+    """Q1 y Q3 de la AV inicial de TODA la corrida (es decir, del prestador), no del filtro actual: así los rangos no cambian al filtrar."""
+    v = pd.to_numeric(mart["AV_letras_inicial"], errors="coerce").dropna()
+    return (float(v.quantile(.25)), float(v.quantile(.75))) if len(v) else (np.nan, np.nan)
+
+
+def texto_bandas_av(q1: float, q3: float) -> str:
+    return f"AV baja: ≤ Q1 ({q1:g} letras) · AV media: entre Q1 y Q3 · AV alta: ≥ Q3 ({q3:g} letras)"
+
+
+def banda_av(serie: pd.Series, q1: float, q3: float) -> pd.Series:
+    """AV baja: ≤ Q1 · AV media: entre Q1 y Q3 · AV alta: ≥ Q3 (los atípicos quedan en baja o alta). Sin dato -> NaN."""
     v = pd.to_numeric(serie, errors="coerce")
-    g = np.select([v < 30, v < 65, v >= 65], BANDAS_AV, default="")
+    g = np.select([v <= q1, v >= q3], BANDAS_AV[::2], default=BANDAS_AV[1])
     return pd.Series(np.where(v.isna(), None, g), index=serie.index, dtype=object)
 
 
-def resumen_bandas_av(df: pd.DataFrame) -> pd.DataFrame:
+def resumen_bandas_av(df: pd.DataFrame, q1: float, q3: float) -> pd.DataFrame:
     """Por rango de AV inicial: valor general (media) frente a la mediana y el cambio respecto al valor base."""
-    d = df.assign(banda=banda_av(df["AV_letras_inicial"]))
+    d = df.assign(banda=banda_av(df["AV_letras_inicial"], q1, q3))
     filas = []
     for nombre, g in [(b, d[d["banda"] == b]) for b in BANDAS_AV] + [("General", d[d["banda"].notna()])]:
         if g.empty:

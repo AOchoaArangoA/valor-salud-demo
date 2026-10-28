@@ -303,12 +303,13 @@ if seg == "Con AV a S52":
 elif seg == "Con AV a S52 y S104":
     df = df[df["tiene_s52"] & df["tiene_s104"]]
 
+Q1_AV, Q3_AV = L.cortes_av(MART)
 BANDAS_SEL = st.sidebar.multiselect(
     "Rango de AV inicial", L.BANDAS_AV, default=L.BANDAS_AV,
-    help="AV baja: 0 a 29 letras · AV media: 30 a 64 · AV alta: 65 a 85. Filtra TODO el tablero (menos calidad de vida, que usa "
-         "su propio universo).")
+    help=L.texto_bandas_av(Q1_AV, Q3_AV) + ". Los cuartiles se calculan con todos los paciente-ojo reingreso del prestador. "
+         "Filtra TODO el tablero (menos calidad de vida, que usa su propio universo).")
 if set(BANDAS_SEL) != set(L.BANDAS_AV):
-    df = df[L.banda_av(df["AV_letras_inicial"]).isin(BANDAS_SEL)]
+    df = df[L.banda_av(df["AV_letras_inicial"], Q1_AV, Q3_AV).isin(BANDAS_SEL)]
 
 if df.empty:
     st.sidebar.warning("Los filtros no dejan ningún paciente-ojo reingreso.")
@@ -727,10 +728,10 @@ if VISTA == SECCIONES[0]:
 
     # ---- AV por cuartil de AV inicial: valor general vs. mediana y cambio frente a la base
     st.markdown("##### Agudeza visual por rango de AV inicial")
-    rb = L.resumen_bandas_av(df)
+    rb = L.resumen_bandas_av(df, Q1_AV, Q3_AV)
     if not rb.empty:
         st.dataframe(rb.round(1), hide_index=True)
-        st.caption("Rangos de la propuesta: AV baja (0 a 29), AV media (30 a 64) y AV alta (65 a 85 letras); coinciden con los cuartiles de P1 (los dos centrales agrupados). "
+        st.caption(L.texto_bandas_av(Q1_AV, Q3_AV) + ". Los cuartiles son los del prestador (toda la corrida); los atípicos quedan en AV baja o AV alta. "
                    "Cada fila compara el valor general (media) con la mediana y muestra el cambio frente al valor base (AV inicial). Use el filtro "
                    "«Rango de AV inicial» de la barra lateral para filtrar todo el tablero.")
 
@@ -845,7 +846,7 @@ if VISTA == SECCIONES[2]:
     with g1:
         dias = df["Oportunidad_inicio_tto"].dropna().clip(-30, 180)
         fig = go.Figure(go.Histogram(x=dias, nbinsx=40, marker_color=CAT[0]))
-        fig.add_vline(x=META.get("oportunidad_inicio_max_dias", 30), line_dash="dash", line_color=SEL, annotation_text="límite oportuno")
+        fig.add_vline(x=config.OPORTUNIDAD_INICIO_MAX_DIAS, line_dash="dash", line_color=SEL, annotation_text="límite oportuno")
         base_layout(fig, "Oportunidad: días de diagnóstico a 1ª inyección", 300, xaxis=dict(title="días (recortado −30…180)"),
                     yaxis=dict(title="paciente-ojo reingreso"))
         st.plotly_chart(fig, use_container_width=True, key="gestion-hist")
@@ -856,7 +857,7 @@ if VISTA == SECCIONES[2]:
                                    customdata=[K["cumpl1"][1], K["cumpl2"][1]], hovertemplate="%{x}: %{y:.1f} %<br>%{customdata:,} aplicaciones<extra></extra>"))
             base_layout(fig, f"{L.N_CUMPL}: Año 1 vs Año 2", 300, yaxis=dict(title=f"% a tiempo (±{TOL_PROG} días)", range=[0, 110]))
             st.plotly_chart(fig, use_container_width=True, key="gestion-prog")
-            st.caption(f"Se cuenta por aplicación y por año de tratamiento (no es el año calendario): año 1 = {K['cumpl1'][1]:,} aplicaciones, "
+            st.caption(f"Se cuenta por aplicación y por año de exposición al tratamiento, desde la 1ª inyección (no es el año calendario): año 1 = {K['cumpl1'][1]:,} aplicaciones, "
                        f"año 2 = {K['cumpl2'][1]:,}. El año 2 solo incluye a quienes siguen en tratamiento.".replace(",", "."))
         else:
             st.markdown(f"**{L.N_CUMPL}: Año 1 vs Año 2**")
@@ -1028,11 +1029,14 @@ if VISTA == SECCIONES[5]:
     costo_por_diagnostico(df)
     if COSTOS_DUMMY:
         st.caption("Costos unitarios de ejemplo.")
-    with st.expander("Utilización por diagnóstico (consultas y OCT)"):
-        r1, r2, r3 = st.columns(3)
-        for col_, (v1, v2, tit_, k_) in zip((r1, r2, r3), (("Cons_Retina_NAnio1", "Cons_Retina_NAnio2", "Consultas de retina", "cb-cretina"),
-                                                           ("Cons_Oftalmo_NAnio1", "Cons_Oftalmo_NAnio2", "Consultas de oftalmología", "cb-coft"),
-                                                           ("TipoAyuda_OCT_NAnio1", "TipoAyuda_OCT_NAnio2", "Cantidad de OCT", "cb-coct"))):
+    with st.expander("Utilización por diagnóstico (inyecciones, moléculas, consultas y OCT)"):
+        graficas_u = (("apl_anio1", "apl_anio2", "Inyecciones", "cb-uiny"),
+                      ("n_moleculas_anio1", "n_moleculas_anio2", "Moléculas distintas", "cb-umol"),
+                      ("Cons_Retina_NAnio1", "Cons_Retina_NAnio2", "Consultas de retina", "cb-cretina"),
+                      ("Cons_Oftalmo_NAnio1", "Cons_Oftalmo_NAnio2", "Consultas de oftalmología", "cb-coft"),
+                      ("TipoAyuda_OCT_NAnio1", "TipoAyuda_OCT_NAnio2", "Cantidad de OCT", "cb-coct"))
+        graficas_u = [g_ for g_ in graficas_u if g_[0] in df and g_[1] in df]
+        for col_, (v1, v2, tit_, k_) in zip([c_ for _ in range(0, len(graficas_u), 3) for c_ in st.columns(3)], graficas_u):
             with col_:
                 fig = go.Figure()
                 for i_, (cc, nn) in enumerate(((v1, "Año 1"), (v2, "Año 2"))):
@@ -1222,6 +1226,24 @@ if VISTA == SECCIONES[6]:
         st.plotly_chart(fig, use_container_width=True, key="met-av-delta")
     st.dataframe(pd.DataFrame([[n] + l + [f"{d:+d}", c] for n, l, _, d, c in ej], columns=["Ojo (ejemplo)"] + puntos_ej + ["Δ AV a S104 (letras)", "Lectura"]),
                  hide_index=True)
+
+    st.markdown("##### Equivalencia entre Snellen y letras ETDRS")
+    st.caption("En la consulta la agudeza visual se registra en Snellen (20/x); el tablero la convierte a letras para poder sumar y restar. "
+               "Cada línea de la cartilla son 5 letras: por ejemplo, pasar de 20/160 a 20/100 es ganar 10 letras (2 líneas).")
+    eq = pd.DataFrame(L.EQUIV_SNELLEN, columns=["Snellen", "Letras ETDRS", "logMAR"])
+    s1, s2 = st.columns([3, 2])
+    with s1:
+        fig = go.Figure(go.Scatter(x=eq["Snellen"], y=eq["Letras ETDRS"], mode="lines+markers+text", text=eq["Letras ETDRS"], textposition="top center",
+                                   line=dict(color=CAT[0], width=3), marker=dict(size=8), cliponaxis=False, showlegend=False))
+        fig.add_annotation(x="20/100", y=50, ax="20/160", ay=40, xref="x", yref="y", axref="x", ayref="y", showarrow=True, arrowhead=2, arrowcolor=SEL,
+                           text="", standoff=4, startstandoff=4)
+        fig.add_annotation(x="20/250", y=62, text="20/160 → 20/100: +10 letras = 2 líneas", showarrow=False, font=dict(size=11, color=SEL))
+        base_layout(fig, "Snellen (de mejor a peor visión) → letras", 340, xaxis=dict(title="Snellen"), yaxis=dict(title="Letras ETDRS", range=[0, 92]))
+        ejex_categorico(fig, list(eq["Snellen"]))
+        st.plotly_chart(fig, use_container_width=True, key="met-snellen")
+    with s2:
+        st.dataframe(eq, hide_index=True, height=340)
+    st.caption("Peor que 20/800 (cuenta dedos, movimiento de manos, percepción de luz) equivale a menos de 5 letras.")
     st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora. 10 letras equivalen aproximadamente a 2 líneas de la cartilla.")
 
     st.markdown("##### Hoja de parámetros")
@@ -1238,7 +1260,7 @@ if VISTA == SECCIONES[6]:
         ["Insumo", META.get("insumo", "—")],
         ["Generada", str(META.get("generado", "—"))[:16].replace("T", " ")],
         ["Ventana de cumplimiento de la fecha programada", f"±{TOL_PROG} días"],
-        ["Inicio oportuno", f"1ª inyección ≤ {META.get('oportunidad_inicio_max_dias', config.OPORTUNIDAD_INICIO_MAX_DIAS)} días del diagnóstico"],
+        ["Inicio oportuno", f"1ª inyección ≤ {config.OPORTUNIDAD_INICIO_MAX_DIAS} días del diagnóstico"],
         ["AV rellenada por logMAR", "Sí" if META.get("av_rellena_por_logmar", True) else "No"],
         ["Costos unitarios", "Tabla de referencia (de ejemplo)" if COSTOS_DUMMY else META.get("costos_fuente", "—")],
     ], columns=["Parámetro", "Valor"]), hide_index=True)

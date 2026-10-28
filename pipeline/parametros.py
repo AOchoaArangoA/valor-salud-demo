@@ -19,9 +19,9 @@ _FILAS = [
      META_PCT_PROVISIONAL, "%", "provisional", "% de paciente-ojo reingreso que completan las dosis de carga (Adherencia_final_12)."),
     ("cumplimiento", "Cumplimiento de aplicaciones", f"fecha real dentro de ±{config.TOLERANCIA_PROGRAMACION_DIAS} días de la programada",
      META_PCT_PROVISIONAL, "%", "provisional",
-     "% de aplicaciones a tiempo, contadas por aplicación y por año de tratamiento (año 1: días 0-364 desde la 1ª inyección; año 2: días 365-728)."),
+     "% de aplicaciones a tiempo, contadas por aplicación y por año de exposición al tratamiento (año 1: días 0-364 desde la 1ª inyección; año 2: días 365-728)."),
     ("dosis", "Dosis aplicadas Año 1 / Año 2", "promedio por paciente-ojo reingreso", None, "dosis", "por definir",
-     "Inyecciones recibidas en cada año de tratamiento (año 1 hasta la semana 52; año 2 entre la semana 52 y la 104)."),
+     "Inyecciones recibidas en cada año de exposición al tratamiento (año 1 hasta la semana 52; año 2 entre la semana 52 y la 104)."),
     ("extension", "Extensión última dosis", "semanas entre la penúltima y la última dosis (S52 / S104)", None, "semanas", "por definir",
      "Intervalo entre las dos últimas aplicaciones dentro de la ventana de cada semana."),
     ("seca", "Anatomía sin líquido en OCT", "sin líquido intra ni subretiniano en S52 / S104",
@@ -37,15 +37,16 @@ _FILAS = [
 # Reglas de medición que no son una meta pero definen cómo se lee el tablero.
 REGLAS: List[Dict[str, str]] = [
     {"Regla": "Paciente-ojo reingreso", "Definición": "Unidad de análisis: un ojo en un episodio de tratamiento (ingreso o reingreso)."},
-    {"Regla": "Año de tratamiento", "Definición": "Año 1 = días 0-364 desde la primera inyección del episodio; año 2 = días 365-728. Es la misma ventana para "
+    {"Regla": "Año de exposición al tratamiento", "Definición": "Año 1 = días 0-364 desde la primera inyección del episodio; año 2 = días 365-728. Es la misma ventana para "
                                                   "inyecciones, costos y cumplimiento (no es el año calendario)."},
     {"Regla": "Semanas de resultado", "Definición": f"S16, S52 y S104 = visita más cercana a la semana objetivo (±{config.TOLERANCIA_VISITA_DIAS} días). "
                                                      "Los resultados de S104 se comparan contra la AV inicial."},
     {"Regla": "Seguimiento a S104", "Definición": "«Con AV a S52 y S104» exige las dos mediciones: un paciente-ojo con S104 sin S52 no entra a esa cohorte."},
     {"Regla": "Año 1 y año 2 completos", "Definición": "Utilización, costos y cumplimiento de los años 1 y 2 solo incluyen paciente-ojo reingreso con 2 años de "
                                                          "seguimiento posible, para no promediar años censurados."},
-    {"Regla": "Rangos de AV inicial", "Definición": "AV baja: 0 a 29 letras · AV media: 30 a 64 · AV alta: 65 a 85 (coinciden con los cuartiles de P1; "
-                                                     "los dos cuartiles centrales se agrupan)."},
+    {"Regla": "Rangos de AV inicial", "Definición": "Cuartiles de la AV inicial del prestador (toda la corrida): AV baja ≤ Q1 · AV media entre Q1 y Q3 · "
+                                                     "AV alta ≥ Q3. Los atípicos quedan en AV baja o AV alta."},
+    {"Regla": "Inicio oportuno", "Definición": f"Primera inyección a ≤ {config.OPORTUNIDAD_INICIO_MAX_DIAS} días del diagnóstico."},
     {"Regla": "Costo emparejado con la semana", "Definición": "Δ AV a S52 se cruza con el costo del año 1; Δ AV a S104 con el costo total (año 1 + año 2)."},
     {"Regla": "Calidad de vida", "Definición": "Los puntajes totales de cada encuesta usan a todos los pacientes que la respondieron; la comparación entre "
                                                "encuestas usa solo a quienes tienen las dos."},
