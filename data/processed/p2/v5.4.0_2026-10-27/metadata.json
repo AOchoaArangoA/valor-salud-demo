@@ -1,5 +1,5 @@
 {
-  "generado": "2026-10-09T20:38:58",
+  "generado": "2026-10-27T21:28:19",
   "prestador": "p2",
   "insumo": "Formulario_sintetico.xlsx",
   "costos_fuente": "maestra_costos_por_anio_DUMMY.xlsx",
@@ -8,7 +8,7 @@
   "av_rellena_por_logmar": true,
   "oportunidad_inicio_max_dias": 30,
   "tolerancia_programacion_dias": 10,
-  "filas_mart": 1269,
+  "filas_mart": 1503,
   "calidad_insumo": {
     "oct_srf_completo_pct": 100.0,
     "oct_irf_distintos": 2,
@@ -18,7 +18,7 @@
   },
   "version": "5.4.0",
   "cargado_por": "Generador sintético",
-  "carpeta": "v5.4.0_2026-10-09",
+  "carpeta": "v5.4.0_2026-10-27",
   "es_demo": true,
   "sintetico": true,
   "semilla": 2026,

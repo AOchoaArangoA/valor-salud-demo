@@ -68,6 +68,7 @@ def cargar(directorio: Path, llave: Optional[bytes] = None) -> Tuple[pd.DataFram
 
 COLS_APL = ["pacienteojoreingreso", "con_dosis", "Oportunidad_aplicacion_dias", "Clasificacion_cumplimiento",
             "Semanas_Apl_a_Prog", "Semanas_Entre_Dosis"]
+COLS_APL_ANIO = ["dias_desde_primera", "Oportunidad_aplicacion_cat"]   # opcionales: cumplimiento por año de tratamiento
 # Verde = dentro de la ventana de tolerancia (2, 3, 4); amarillo = fuera de la ventana pero no grave (1, 5); rojo = retraso grave (6).
 COLOR_CLASE = {"1": "#F2C230", "2": "#8BC34A", "3": "#2E7D32", "4": "#66BB6A", "5": "#E8A900", "6": "#C0392B"}
 
@@ -79,7 +80,7 @@ def cargar_aplicaciones(directorio: Path, llave: Optional[bytes] = None) -> Opti
         d = seguridad.leer_parquet(f, llave)
     except (OSError, ValueError):
         return None
-    return d[COLS_APL] if all(c in d.columns for c in COLS_APL) else None
+    return d[COLS_APL + [c for c in COLS_APL_ANIO if c in d.columns]] if all(c in d.columns for c in COLS_APL) else None
 
 
 def resumen_programacion(apl: pd.DataFrame, tol: int) -> Dict[str, float]:
@@ -89,6 +90,40 @@ def resumen_programacion(apl: pd.DataFrame, tol: int) -> Dict[str, float]:
         return {"n": 0}
     return {"n": int(len(d)), "dentro": float((d.abs() <= tol).mean() * 100), "promedio": float(d.mean()),
             "mediana": float(d.median()), "grave": float(apl["Clasificacion_cumplimiento"].str.startswith("6").sum() / len(d) * 100)}
+
+
+def cumplimiento_anios(apl: Optional[pd.DataFrame], ids) -> Dict[int, Tuple[float, int]]:
+    """% de aplicaciones 'Cumple' (dentro de la ventana de la fecha programada) por AÑO DE TRATAMIENTO: año 1 = días 0-364
+    desde la 1ª inyección, año 2 = días 365-728 (la misma definición de inyecciones y costos). Se cuenta por aplicación
+    (no es un promedio de promedios por paciente). Devuelve {1: (%, n aplicaciones), 2: (%, n aplicaciones)}."""
+    vacio = {1: (np.nan, 0), 2: (np.nan, 0)}
+    if apl is None or not all(c in apl.columns for c in COLS_APL_ANIO):
+        return vacio
+    a = apl[apl["pacienteojoreingreso"].isin(set(ids)) & apl["Oportunidad_aplicacion_cat"].notna()]
+    out = {}
+    for anio, (lo, hi) in {1: (0, 364), 2: (365, 728)}.items():
+        x = a[a["dias_desde_primera"].between(lo, hi)]
+        out[anio] = (float((x["Oportunidad_aplicacion_cat"] == "Cumple").mean() * 100) if len(x) else np.nan, int(len(x)))
+    return out
+
+
+def intervalos_entre_dosis(apl: pd.DataFrame) -> pd.DataFrame:
+    """Una fila por consecutivo de dosis (2 … 9+): n, mediana, media y cuartiles del intervalo REAL (semanas desde la dosis anterior) y
+    mediana del intervalo PROGRAMADO."""
+    e = apl[apl["con_dosis"] >= 2].copy()
+    e["dosis"] = e["con_dosis"].clip(upper=9).astype(int)
+    filas = []
+    for k, g in e.groupby("dosis"):
+        r = g["Semanas_Entre_Dosis"].dropna()
+        r = r[r >= 0]
+        p = g["Semanas_Apl_a_Prog"].dropna()
+        p = p[p >= 0]
+        if r.empty:
+            continue
+        filas.append({"Dosis": f"{k}+" if k == 9 else str(k), "n": int(len(r)), "Mediana real (sem)": float(r.median()), "Media real (sem)": float(r.mean()),
+                      "Q1": float(r.quantile(.25)), "Q3": float(r.quantile(.75)),
+                      "Mediana programada (sem)": float(p.median()) if len(p) else np.nan})
+    return pd.DataFrame(filas)
 
 
 COLS_ANUALES = ["apl_anio1", "apl_anio2", "cumplimiento_anio1", "cumplimiento_anio2", "n_moleculas_anio1", "n_moleculas_anio2",
@@ -134,8 +169,6 @@ def kpis(df: pd.DataFrame) -> Dict[str, Tuple[float, int]]:
     out["av0"] = media(d, "AV_letras_inicial")
     out["av0_med"] = (float(d["AV_letras_inicial"].median()) if d["AV_letras_inicial"].notna().any() else np.nan, int(d["AV_letras_inicial"].notna().sum()))
     out["oct0_med"] = (float(d["OCT_inicial"].median()) if d["OCT_inicial"].notna().any() else np.nan, int(d["OCT_inicial"].notna().sum()))
-    out["ext52"] = media(d, "extension_sem52")
-    out["ext104"] = media(d, "extension_sem104")
     for s_ in (16, 52, 104):
         out[f"oct{s_}_um"] = media(d, f"OCT_sem{s_}")
         out[f"dmic{s_}"] = media(d, f"dif_micras_sem{s_}")
@@ -157,7 +190,7 @@ def kpis(df: pd.DataFrame) -> Dict[str, Tuple[float, int]]:
         out["respondedor"] = (float(config.RESPONDEDOR_PRUEBA), out["respondedor"][1] or len(d))
     out["oportuno"] = porcentaje(d, "oportunidad_ok")
     out["carga"] = porcentaje(d, "adherencia_carga")
-    out["adh16"] = porcentaje(d.assign(a16=d["Adherencia_final_16"]), "a16")
+    out["adh16"] = porcentaje(d, "Adherencia_final_16")
     out["ext52"] = media(d, "extension_sem52")
     out["ext104"] = media(d, "extension_sem104")
     out["dias_inicio"] = media(d, "Oportunidad_inicio_tto")
@@ -214,6 +247,7 @@ def con_cohorte(df: pd.DataFrame, por: str) -> pd.DataFrame:
 
 def resumen_cohortes(df: pd.DataFrame, por: str, n_min: int) -> pd.DataFrame:
     d = con_cohorte(df, por)
+    d["costo_total"] = suma_columnas(d, ["costofin_anio1", "costofin_anio2"]).where(d[["costofin_anio1", "costofin_anio2"]].notna().all(axis=1))
     g = d.groupby("cohorte")
     r = pd.DataFrame({
         "n": g.size(),
@@ -221,7 +255,8 @@ def resumen_cohortes(df: pd.DataFrame, por: str, n_min: int) -> pd.DataFrame:
         "respondedor": g["respondedor"].mean() * 100,
         "seca52": g["RetinaSeca_sem52"].mean() * 100, "seca104": g["RetinaSeca_sem104"].mean() * 100,
         "iny1": g["apl_anio1"].mean(), "iny2": g["apl_anio2"].mean(),
-        "costo1": g["costofin_anio1"].mean(), "costo2": g["costofin_anio2"].mean(),
+        "costo1": g["costofin_anio1"].mean(), "costo2": g["costofin_anio2"].mean(), "costo_total": g["costo_total"].mean(),
+        "n_costo_total": g["costo_total"].count(),
     }).reset_index()
     return r[r["n"] >= n_min].sort_values("n", ascending=False)
 
@@ -366,25 +401,25 @@ def f_millones(v: Optional[float]) -> str:
     return "—" if v is None or pd.isna(v) else "$ " + f_num(v / 1e6, 1) + " M"
 
 
-# ------------------------------------------------------------------ cuartiles de AV inicial (rangos fijos del experto)
-BANDAS_AV = ["Q1 (0 a 30)", "Q2-Q3 (30 a 65)", "Q4 (65 a 85)"]
+# ------------------------------------------------------------------ rangos de AV inicial (cortes fijos del experto; coinciden con los cuartiles de P1)
+BANDAS_AV = ["AV baja (0 a 29)", "AV media (30 a 64)", "AV alta (65 a 85)"]
 
 
 def banda_av(serie: pd.Series) -> pd.Series:
-    """Q1: 0 a <30 · Q2-Q3: 30 a <65 · Q4: 65 o más (el rango de la propuesta llega a 85). Sin dato -> NaN."""
+    """AV baja: 0 a <30 · AV media: 30 a <65 · AV alta: 65 o más (el rango de la propuesta llega a 85). Sin dato -> NaN."""
     v = pd.to_numeric(serie, errors="coerce")
     g = np.select([v < 30, v < 65, v >= 65], BANDAS_AV, default="")
     return pd.Series(np.where(v.isna(), None, g), index=serie.index, dtype=object)
 
 
 def resumen_bandas_av(df: pd.DataFrame) -> pd.DataFrame:
-    """Por cuartil de AV inicial: valor general (media) frente a la mediana y el cambio respecto al valor base."""
+    """Por rango de AV inicial: valor general (media) frente a la mediana y el cambio respecto al valor base."""
     d = df.assign(banda=banda_av(df["AV_letras_inicial"]))
     filas = []
     for nombre, g in [(b, d[d["banda"] == b]) for b in BANDAS_AV] + [("General", d[d["banda"].notna()])]:
         if g.empty:
             continue
-        fila = {"Cuartil de AV inicial": nombre, "n": int(len(g)), "AV inicial (media)": g["AV_letras_inicial"].mean(),
+        fila = {"Rango de AV inicial": nombre, "n": int(len(g)), "AV inicial (media)": g["AV_letras_inicial"].mean(),
                 "AV inicial (mediana)": g["AV_letras_inicial"].median()}
         for sem in (52, 104):
             c = g[f"dif_lts_sem{sem}"].dropna()
