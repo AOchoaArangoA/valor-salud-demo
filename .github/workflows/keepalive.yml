@@ -1,0 +1,34 @@
+name: keepalive
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  visit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install playwright
+          playwright install --with-deps chromium
+      - name: Visitar la app
+        run: |
+          python - <<'PY'
+          from playwright.sync_api import sync_playwright
+          URL = "https://valor-salud-demo.streamlit.app/"
+          with sync_playwright() as p:
+              b = p.chromium.launch()
+              pg = b.new_page()
+              pg.goto(URL, wait_until="domcontentloaded", timeout=60000)
+              btn = pg.get_by_role("button", name="Yes, get this app back up!")
+              if btn.count():
+                  btn.click()
+                  print("La app estaba dormida: despertada")
+              pg.wait_for_timeout(20000)
+              print("Título:", pg.title())
+              b.close()
+          PY
