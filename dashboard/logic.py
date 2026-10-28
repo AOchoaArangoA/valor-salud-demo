@@ -26,7 +26,7 @@ N_EXT = "Extensión última dosis"
 N_ANAT = "Anatomía sin líquido en OCT"
 N_ECV1 = "Encuesta de calidad de vida 1"
 N_ECV2 = "Encuesta de calidad de vida 2"
-N_PAC = "Pacientes con degeneración macular"
+N_PAC = "Pacientes con maculopatía"
 N_PO = "Paciente-ojo"
 N_POR = "Paciente-ojo reingreso"
 
@@ -278,6 +278,8 @@ def trayectoria_larga(df: pd.DataFrame, prefijo: str = "dif_lts", base0: bool = 
 # Espagueti de la propuesta del equipo: eje LB / S16 / S52 / S104 (equidistante), umbral de +5 letras
 PUNTOS_ESPAGUETI = [("LB", None), ("S16", 16), ("S52", 52), ("S104", 104)]
 UMBRAL_MEJORA_LETRAS = 5
+# Ejemplo ilustrativo para la pestaña de metodología: tres ojos INVENTADOS (no son pacientes) con la AV en letras ETDRS en LB / S16 / S52 / S104.
+EJEMPLO_AV = [("Ojo A", [45, 55, 60, 62]), ("Ojo B", [55, 57, 53, 56]), ("Ojo C", [60, 52, 48, 45])]
 CRITERIOS_ESPAGUETI = ["Aleatoria (reproducible)", "Mayor mejora (Δ AV final)", "Mayor caída (Δ AV final)",
                        "Más seguimiento (con S104)"]
 

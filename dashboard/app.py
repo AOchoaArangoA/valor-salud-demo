@@ -349,7 +349,7 @@ IDS_DIBUJAR = L.elegir_pacientes(TRAY, N_DIBUJAR, CRITERIO)
 
 st.sidebar.markdown("---")
 st.sidebar.metric("Paciente-ojo reingreso en el filtro", f"{len(df):,}".replace(",", "."))
-st.sidebar.caption(f"Paciente-ojo: {df['pacienteojo'].nunique():,} · Pacientes con degeneración macular: {df['numero_doc'].nunique():,}".replace(",", "."))
+st.sidebar.caption(f"Paciente-ojo: {df['pacienteojo'].nunique():,} · {L.N_PAC}: {df['numero_doc'].nunique():,}".replace(",", "."))
 st.sidebar.caption(f"Prestador: **{PRESTADOR.upper()}** · insumo: {META.get('insumo', '—')} · corrida {META.get('generado', '—')}")
 if COSTOS_DUMMY:
     st.sidebar.caption("Costos unitarios: tabla de referencia")
@@ -1191,6 +1191,39 @@ if VISTA == SECCIONES[4]:
 if VISTA == SECCIONES[6]:
     st.markdown('<div class="nivel" style="--c:#5B6675"><h3>7. Explicación metodológica</h3>'
                 '<p>Cómo se calcula cada indicador, con qué ventanas y contra qué meta.</p></div>', unsafe_allow_html=True)
+    st.markdown("##### Cómo se lee el cambio de agudeza visual")
+    st.caption("Ejemplo con datos sintéticos: tres ojos inventados que no corresponden a ningún paciente ni a ninguna corrida. La agudeza visual se expresa en "
+               "**letras** (escala ETDRS, de 0 a 85), no en fracciones de Snellen. El cambio es: letras de la visita − letras de la línea base (LB).")
+    puntos_ej = [p[0] for p in L.PUNTOS_ESPAGUETI]
+    ej = []
+    for nombre_ej, letras_ej in L.EJEMPLO_AV:
+        d_ej = letras_ej[-1] - letras_ej[0]
+        ej.append((nombre_ej, letras_ej, [v - letras_ej[0] for v in letras_ej], d_ej, L.clase_cambio(d_ej)))
+    e1, e2 = st.columns(2)
+    with e1:
+        fig = go.Figure()
+        for nombre_ej, letras_ej, _, _, clase_ej in ej:
+            fig.add_trace(go.Scatter(x=puntos_ej, y=letras_ej, mode="lines+markers+text", name=f"{nombre_ej} · {clase_ej}", text=letras_ej, textposition="top center",
+                                     line=dict(color=COLOR_CAMBIO[clase_ej], width=3), marker=dict(size=9), cliponaxis=False))
+        base_layout(fig, "Agudeza visual en letras ETDRS", 340, showlegend=True, yaxis=dict(title="AV (letras)", range=[0, 85]))
+        ejex_categorico(fig, puntos_ej)
+        st.plotly_chart(fig, use_container_width=True, key="met-av-abs")
+    with e2:
+        fig = go.Figure()
+        fig.add_hrect(y0=-L.UMBRAL_MEJORA_LETRAS, y1=L.UMBRAL_MEJORA_LETRAS, fillcolor=GRIS, opacity=.15, line_width=0,
+                      annotation_text="sin cambio relevante (±5)", annotation_position="top left", annotation_font=dict(size=11, color="#5B6675"))
+        for nombre_ej, _, delta_ej, _, clase_ej in ej:
+            fig.add_trace(go.Scatter(x=puntos_ej, y=delta_ej, mode="lines+markers+text", name=nombre_ej, text=[f"{v:+d}" for v in delta_ej], textposition="top center",
+                                     line=dict(color=COLOR_CAMBIO[clase_ej], width=3), marker=dict(size=9), cliponaxis=False))
+        fig.add_hline(y=L.UMBRAL_MEJORA_LETRAS, line_dash="dash", line_color="#1F77B4", annotation_text="Umbral +5 letras", annotation_position="top right",
+                      annotation_font=dict(size=11, color="#1F77B4"))
+        base_layout(fig, "Cambio frente a la línea base (Δ letras)", 340, showlegend=True, yaxis=dict(title="Δ AV (letras)", zeroline=True, zerolinecolor="#C9CFD8"))
+        ejex_categorico(fig, puntos_ej)
+        st.plotly_chart(fig, use_container_width=True, key="met-av-delta")
+    st.dataframe(pd.DataFrame([[n] + l + [f"{d:+d}", c] for n, l, _, d, c in ej], columns=["Ojo (ejemplo)"] + puntos_ej + ["Δ AV a S104 (letras)", "Lectura"]),
+                 hide_index=True)
+    st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora. 10 letras equivalen aproximadamente a 2 líneas de la cartilla.")
+
     st.markdown("##### Hoja de parámetros")
     pt = pd.DataFrame(parametros.tabla()).drop(columns="clave")
     pt["Meta"] = [("Por definir" if pd.isna(m) else f"{m:g} {u}") for m, u in zip(pt["Meta"], pt["Unidad"])]
