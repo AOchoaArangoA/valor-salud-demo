@@ -1264,3 +1264,7 @@ if VISTA == SECCIONES[6]:
         ["AV rellenada por logMAR", "Sí" if META.get("av_rellena_por_logmar", True) else "No"],
         ["Costos unitarios", "Tabla de referencia (de ejemplo)" if COSTOS_DUMMY else META.get("costos_fuente", "—")],
     ], columns=["Parámetro", "Valor"]), hide_index=True)
+
+# ---------------------------------------------------------------- pie de página
+st.markdown('<div style="margin-top:2.5rem;padding-top:.8rem;border-top:1px solid #DDE2E8;text-align:center;color:#5B6675;font-size:.85rem">'
+            'Proyecto Valor en Salud</div>', unsafe_allow_html=True)
