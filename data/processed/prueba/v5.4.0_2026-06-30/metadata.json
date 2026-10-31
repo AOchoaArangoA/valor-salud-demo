@@ -1,5 +1,5 @@
 {
-  "generado": "2026-10-31T23:21:29",
+  "generado": "2026-10-31T23:30:04",
   "prestador": "prueba",
   "insumo": "Formulario_prueba_2026-06-30.xlsx",
   "costos_fuente": "hoja maestra_costos del libro",
@@ -20,7 +20,7 @@
   "cargado_por": "Generador de formularios de prueba",
   "carpeta": "v5.4.0_2026-06-30",
   "entrega": "v5.4.0_2026-06-30",
-  "ejecucion": "20261031-232120-fe43",
+  "ejecucion": "20261031-232954-2fbe",
   "es_demo": true,
   "sintetico": true,
   "semilla": 2026,
