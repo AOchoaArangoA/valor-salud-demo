@@ -54,7 +54,8 @@ def listar_corridas(directorio: Optional[Path] = None) -> List[Dict]:
         if meta is None:
             continue
         prestador, version = meta.get("prestador", "sin_definir"), meta.get("version")
-        etiqueta = f"{str(prestador).upper()} · v{version}" if version else f"{str(prestador).upper()} · {meta.get('insumo', 'corrida anterior')}"
+        entrega = meta.get("entrega") or meta.get("carpeta") or (f"v{version}" if version else meta.get("insumo", "corrida anterior"))
+        etiqueta = f"{str(prestador).upper()} · {entrega}"
         out.append({"ruta": c, "etiqueta": f"{etiqueta} · {str(meta.get('generado', ''))[:16].replace('T', ' ')}",
                     "generado": meta.get("generado", ""), "meta": meta})
     out.sort(key=lambda x: x["generado"], reverse=True)          # dentro de cada prestador, la carga más reciente primero

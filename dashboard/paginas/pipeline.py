@@ -63,9 +63,16 @@ def ejecutar_entrega_guardada() -> None:
                f"versión del formulario {man.get('version_formulario', '—')} · archivos: " + (", ".join(archivos) or "—"))
     if man.get("filas_por_hoja"):
         st.caption("Filas por hoja: " + " · ".join(f"{h} {n:,}".replace(",", ".") for h, n in man["filas_por_hoja"].items()))
+    if man.get("notas"):
+        st.caption("Notas de la entrega: " + " · ".join(map(str, man["notas"])))
+    previas = [c for c in L.listar_corridas() if str(c["meta"].get("prestador", "")).lower() == e["prestador"]
+               and (c["meta"].get("entrega") or c["meta"].get("carpeta")) == e["carpeta"]]
+    if previas:
+        st.caption(f"Esta entrega ya se ha ejecutado {len(previas)} {'vez' if len(previas) == 1 else 'veces'} (la última, el "
+                   f"{comun.fecha(max(c['generado'] for c in previas))}). Cada ejecución nueva se guarda como otra versión; las anteriores se conservan.")
     quien = st.text_input("Quién ejecuta", key="pl-quien", help="Queda en el historial de ejecuciones.")
-    st.caption("Se recalcula todo a partir del formulario guardado. Los resultados nuevos reemplazan a los anteriores de esa misma "
-               "entrega solo si el proceso termina bien.")
+    st.caption("Se recalcula todo a partir del formulario guardado. El resultado queda como una versión nueva, que aparece en el "
+               "tablero solo si el proceso termina bien.")
     if st.button("Ejecutar pipeline", type="primary", key="pl-ejecutar", disabled=not quien.strip()):
         correr("Ejecutando el pipeline…", lambda en_vivo: ingest.reprocesar(e["ruta"], usuario=quien.strip(), en_vivo=en_vivo))
 

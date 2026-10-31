@@ -1,0 +1,701 @@
+{
+  "generado": "2026-10-31T23:21:10",
+  "hojas": [
+    {
+      "hoja": "pacientes",
+      "filas": 371,
+      "columnas": [
+        {
+          "columna": "id_paciente",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_dilig",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_doc",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_nac",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "edad",
+          "obligatoria": true,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "sexo",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "peso",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "talla",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "eapb",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "regimen",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "sede",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "estatus_fumar",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "ant_diabetes",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "ant_insulina",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "ant_hta",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "ant_dislipidemia",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "actividad_fisica",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "etnia",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        },
+        {
+          "columna": "hba1c",
+          "obligatoria": false,
+          "con_dato": 105,
+          "pct": 28.3
+        },
+        {
+          "columna": "imc",
+          "obligatoria": false,
+          "con_dato": 371,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "lineabase",
+      "filas": 467,
+      "columnas": [
+        {
+          "columna": "id_registro",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_registro",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "pacienteojoreingreso",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "pacienteojo",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_doc",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "ojo",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "reingreso",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "medico",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_paciente",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "medicamento",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_fecha",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_cod_ppal",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_ppal",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "av_num",
+          "obligatoria": true,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "av_cartilla",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "av_tipo",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_equipo",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_dep",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_irf",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_srf",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_hemorragia",
+          "obligatoria": false,
+          "con_dato": 467,
+          "pct": 100.0
+        },
+        {
+          "columna": "egreso_fecha",
+          "obligatoria": false,
+          "con_dato": 328,
+          "pct": 70.2
+        },
+        {
+          "columna": "egreso_causa",
+          "obligatoria": false,
+          "con_dato": 328,
+          "pct": 70.2
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "aplicaciones",
+      "filas": 3937,
+      "columnas": [
+        {
+          "columna": "pacienteojoreingreso",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "pacienteojo",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_doc",
+          "obligatoria": false,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "ojo",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "reingreso",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_tto",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "con_dosis",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_aplicacion",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "molecula",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "semana_extension",
+          "obligatoria": false,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_programacion",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_ppal",
+          "obligatoria": false,
+          "con_dato": 3937,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_ppal_desc",
+          "obligatoria": true,
+          "con_dato": 3937,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "consultas",
+      "filas": 4530,
+      "columnas": [
+        {
+          "columna": "pacienteojoreingreso",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "pacienteojo",
+          "obligatoria": false,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_doc",
+          "obligatoria": false,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "ojo",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "reingreso",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_consulta",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_consulta",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "agu_vis",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "endoftalmitis",
+          "obligatoria": true,
+          "con_dato": 4530,
+          "pct": 100.0
+        },
+        {
+          "columna": "dx_ppal",
+          "obligatoria": false,
+          "con_dato": 4530,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "ayudas",
+      "filas": 2144,
+      "columnas": [
+        {
+          "columna": "pacienteojoreingreso",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "pacienteojo",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_doc",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "ojo",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "reingreso",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "tipo_ayuda",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecha_ayuda",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_irf",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_srf",
+          "obligatoria": true,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_dep",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_hemorragia",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_quistes",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_hrfs",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_atrofia",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        },
+        {
+          "columna": "oct_fibrosis",
+          "obligatoria": false,
+          "con_dato": 2144,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "maestra_costos",
+      "filas": 9,
+      "columnas": [
+        {
+          "columna": "Grupo",
+          "obligatoria": false,
+          "con_dato": 9,
+          "pct": 100.0
+        },
+        {
+          "columna": "Describe",
+          "obligatoria": false,
+          "con_dato": 9,
+          "pct": 100.0
+        },
+        {
+          "columna": "Costo promedio unitario",
+          "obligatoria": false,
+          "con_dato": 9,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    },
+    {
+      "hoja": "calidadvida",
+      "filas": 394,
+      "columnas": [
+        {
+          "columna": "numero_doc",
+          "obligatoria": true,
+          "con_dato": 394,
+          "pct": 100.0
+        },
+        {
+          "columna": "nro_encuesta",
+          "obligatoria": true,
+          "con_dato": 394,
+          "pct": 100.0
+        },
+        {
+          "columna": "fechaencuesta",
+          "obligatoria": true,
+          "con_dato": 394,
+          "pct": 100.0
+        },
+        {
+          "columna": "fecharegistro",
+          "obligatoria": false,
+          "con_dato": 394,
+          "pct": 100.0
+        }
+      ],
+      "faltan_obligatorias": []
+    }
+  ],
+  "cruces": [
+    {
+      "tipo": "Registros que encuentran su llave",
+      "cruce": "Aplicaciones con su paciente-ojo en línea base",
+      "llave": "pacienteojoreingreso",
+      "total": 3937,
+      "cumplen": 3937,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Registros que encuentran su llave",
+      "cruce": "Consultas con su paciente-ojo en línea base",
+      "llave": "pacienteojoreingreso",
+      "total": 4530,
+      "cumplen": 4530,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Registros que encuentran su llave",
+      "cruce": "Ayudas diagnósticas con su paciente-ojo en línea base",
+      "llave": "pacienteojoreingreso",
+      "total": 2144,
+      "cumplen": 2144,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Registros que encuentran su llave",
+      "cruce": "Línea base con su paciente en la hoja de pacientes",
+      "llave": "numero_doc",
+      "total": 467,
+      "cumplen": 467,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Registros que encuentran su llave",
+      "cruce": "Encuestas de calidad de vida con su paciente en la hoja de pacientes",
+      "llave": "numero_doc",
+      "total": 394,
+      "cumplen": 394,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Cobertura",
+      "cruce": "Paciente-ojo de línea base con al menos una aplicación",
+      "llave": "pacienteojoreingreso",
+      "total": 467,
+      "cumplen": 466,
+      "no_cumplen": 1,
+      "pct": 99.8
+    },
+    {
+      "tipo": "Cobertura",
+      "cruce": "Paciente-ojo de línea base con al menos una consulta",
+      "llave": "pacienteojoreingreso",
+      "total": 467,
+      "cumplen": 467,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Cobertura",
+      "cruce": "Paciente-ojo de línea base con al menos una ayuda diagnóstica (OCT)",
+      "llave": "pacienteojoreingreso",
+      "total": 467,
+      "cumplen": 467,
+      "no_cumplen": 0,
+      "pct": 100.0
+    },
+    {
+      "tipo": "Cobertura",
+      "cruce": "Pacientes con al menos una encuesta de calidad de vida",
+      "llave": "numero_doc",
+      "total": 371,
+      "cumplen": 243,
+      "no_cumplen": 128,
+      "pct": 65.5
+    }
+  ]
+}

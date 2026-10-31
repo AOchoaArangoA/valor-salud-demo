@@ -1,0 +1,34 @@
+{
+  "prestador": "prueba",
+  "version_formulario": "5.4.0",
+  "fecha_recepcion": "2025-12-31",
+  "cargado_por": "Generador de formularios de prueba",
+  "cargado_en": "2025-12-31T08:00:00",
+  "formato": "formulario de prueba (tools/generar_formularios_prueba.py)",
+  "archivos": {
+    "Formulario_prueba_2025-12-31.xlsx": {
+      "descripcion": "libro del formulario (insumo principal)"
+    },
+    "ecv_prom_dimensiones.xlsx": {
+      "descripcion": "resultado de calidad de vida (ECV)"
+    }
+  },
+  "filas_por_hoja": {
+    "pacientes": 371,
+    "lineabase": 467,
+    "aplicaciones": 3937,
+    "consultas": 4530,
+    "ayudas": 2144,
+    "calidadvida": 394,
+    "maestra_costos": 9
+  },
+  "costos_modo": "libro",
+  "ecv_incluida": true,
+  "es_demo": true,
+  "sintetico": true,
+  "semilla": 2026,
+  "descripcion": "Formulario de PRUEBA con corte al 2025-12-31: datos sintéticos, sin personas reales.",
+  "notas": [
+    "Sin faltantes provocados."
+  ]
+}

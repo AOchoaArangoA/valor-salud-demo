@@ -1,0 +1,28 @@
+{
+  "generado": "2026-10-31T23:21:41",
+  "prestador": "prueba",
+  "insumo": "Formulario_prueba_2026-09-30.xlsx",
+  "costos_fuente": "hoja maestra_costos del libro",
+  "costos_es_dummy": false,
+  "ecv_fuente": "ecv_prom_dimensiones.xlsx",
+  "av_rellena_por_logmar": true,
+  "oportunidad_inicio_max_dias": 15,
+  "tolerancia_programacion_dias": 10,
+  "filas_mart": 507,
+  "calidad_insumo": {
+    "oct_srf_completo_pct": 100.0,
+    "oct_irf_distintos": 2,
+    "fecha_programacion_completa_pct": 100.0,
+    "retina_seca_evaluable": true,
+    "cumplimiento_programacion_evaluable": true
+  },
+  "version": "5.4.0",
+  "cargado_por": "Generador de formularios de prueba",
+  "carpeta": "v5.4.0_2026-09-30",
+  "entrega": "v5.4.0_2026-09-30",
+  "ejecucion": "20261031-232132-2c50",
+  "es_demo": true,
+  "sintetico": true,
+  "semilla": 2026,
+  "descripcion": "Formulario de PRUEBA con corte al 2026-09-30: datos sintéticos, sin personas reales."
+}

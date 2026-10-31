@@ -68,8 +68,8 @@ t_form, t_res = st.tabs(["1 · Formulario (datos de entrada)", "2 · Resultados 
 with t_form:
     rep = completitud.leer(corrida["ruta"])
     if rep is None:
-        st.info("Esta corrida se procesó antes de que existiera el reporte del formulario. Se genera automáticamente en la "
-                "próxima carga o al reprocesar la entrega.")
+        st.info("Esta corrida se procesó antes de que existiera el reporte del formulario, así que no lo trae. Se genera "
+                "automáticamente en cada ejecución nueva del pipeline: elija, por ejemplo, una corrida del prestador PRUEBA.")
     else:
         resumen, detalle = [], []
         for h in rep["hojas"]:

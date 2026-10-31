@@ -229,8 +229,9 @@ def reprocesar(raw_dir: Path, *, costos_modo: Optional[str] = None, costos: Opti
                raiz: Optional[Path] = None, usuario: Optional[str] = None, en_vivo: Optional[Callable[[str], None]] = None) -> Path:
     """Vuelve a correr el pipeline sobre una entrega que ya está en data/raw (sin copiar nada).
     Si no se indican, la tabla de costos y el resultado de calidad de vida se toman de la propia entrega (según su manifest).
-    Los resultados se calculan aparte y solo al terminar bien reemplazan los de <raiz>/processed/<prestador>/<carpeta>:
-    si el proceso falla, la versión anterior sigue intacta."""
+    Cada ejecución es una corrida NUEVA: la primera queda en <raiz>/processed/<prestador>/<entrega> y las siguientes en
+    <entrega>__e<id de la ejecución>, así se conservan todas las versiones que se van ejecutando. Se calcula en una
+    carpeta temporal y solo aparece en el tablero si el proceso termina bien."""
     raiz = Path(raiz or config.DATA_ROOT)
     raw_dir = Path(raw_dir)
     manifest = json.loads((raw_dir / "manifest.json").read_text(encoding="utf-8"))
@@ -241,28 +242,27 @@ def reprocesar(raw_dir: Path, *, costos_modo: Optional[str] = None, costos: Opti
     ecv = ecv or _archivo_marcado(raw_dir, manifest, ("resultado de calidad de vida", "ecv"))
     costos = costos or _archivo_marcado(raw_dir, manifest, ("tabla de costos",))
     costos_modo = costos_modo or ("archivo" if costos else manifest.get("costos_modo", "libro"))
-    destino = raiz / "processed" / raw_dir.parent.name / raw_dir.name
-    with registro.ejecucion("Reproceso de una entrega guardada", raiz=raiz, en_vivo=en_vivo, prestador=raw_dir.parent.name,
+    with registro.ejecucion("Ejecución sobre una entrega guardada", raiz=raiz, en_vivo=en_vivo, prestador=raw_dir.parent.name,
                             version=manifest.get("version_formulario"), usuario=usuario or manifest.get("cargado_por"),
-                            archivo=libro.name) as rec, _Bloqueo(raiz):
+                            archivo=libro.name, entrega=raw_dir.name) as rec, _Bloqueo(raiz):
+        base = raiz / "processed" / raw_dir.parent.name
+        destino = base / raw_dir.name if not (base / raw_dir.name).exists() else base / f"{raw_dir.name}__e{rec['id']}"
         rec["destino"] = str(destino)
         log.info("Entrega: %s/%s · libro: %s · costos: %s · calidad de vida: %s", raw_dir.parent.name, raw_dir.name, libro.name,
                  costos.name if costos else costos_modo, ecv.name if ecv else "sin archivo")
+        log.info("Resultados de esta ejecución: %s", destino.name)
         log.info("Validando el libro…")
         validar_libro(libro)   # un libro dañado o incompleto se informa con un mensaje claro, igual que en una carga nueva
-        temporal = destino.parent / f".{destino.name}.nuevo-{uuid.uuid4().hex[:6]}"
+        temporal = base / f".{destino.name}.nuevo"
         try:
             try:
                 ejecutar(libro, temporal, costos_modo=costos_modo, costos_path=costos, ecv_path=ecv, prestador=raw_dir.parent.name,
-                         extra_meta={"version": manifest.get("version_formulario"), "cargado_por": manifest.get("cargado_por", "carga inicial"),
-                                     "carpeta": raw_dir.name, **{k: manifest[k] for k in ("es_demo", "sintetico", "semilla", "descripcion") if k in manifest}})
+                         extra_meta={"version": manifest.get("version_formulario"), "cargado_por": usuario or manifest.get("cargado_por", "carga inicial"),
+                                     "carpeta": raw_dir.name, "entrega": raw_dir.name, "ejecucion": rec["id"],
+                                     **{k: manifest[k] for k in ("es_demo", "sintetico", "semilla", "descripcion") if k in manifest}})
             except (FileNotFoundError, KeyError, ValueError) as e:
                 raise CargaError(f"El archivo es legible pero el proceso no pudo calcularlo: {e}")
-            respaldo = destino.parent / f".{destino.name}.anterior-{uuid.uuid4().hex[:6]}"
-            if destino.exists():
-                destino.rename(respaldo)
             temporal.rename(destino)
-            shutil.rmtree(respaldo, ignore_errors=True)
         finally:
             shutil.rmtree(temporal, ignore_errors=True)
         _resumen_resultado(rec, destino)

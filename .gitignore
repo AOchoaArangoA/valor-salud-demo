@@ -3,8 +3,11 @@ __pycache__/
 .venv/
 
 # Datos de prestadores: los formularios y resultados reales NUNCA van al repositorio (solo la demo sintética P2)
-data/raw/
+data/raw/*
 data/logs/
 data/.carga.lock
 data/processed/*
 !data/processed/p2/
+# Formularios de PRUEBA (tools/generar_formularios_prueba.py): sintéticos, sirven para ensayar el pipeline en la demo
+!data/raw/prueba/
+!data/processed/prueba/

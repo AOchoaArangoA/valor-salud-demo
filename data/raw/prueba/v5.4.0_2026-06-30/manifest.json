@@ -1,0 +1,39 @@
+{
+  "prestador": "prueba",
+  "version_formulario": "5.4.0",
+  "fecha_recepcion": "2026-06-30",
+  "cargado_por": "Generador de formularios de prueba",
+  "cargado_en": "2026-06-30T08:00:00",
+  "formato": "formulario de prueba (tools/generar_formularios_prueba.py)",
+  "archivos": {
+    "Formulario_prueba_2026-06-30.xlsx": {
+      "descripcion": "libro del formulario (insumo principal)"
+    },
+    "ecv_prom_dimensiones.xlsx": {
+      "descripcion": "resultado de calidad de vida (ECV)"
+    }
+  },
+  "filas_por_hoja": {
+    "pacientes": 391,
+    "lineabase": 494,
+    "aplicaciones": 4308,
+    "consultas": 4922,
+    "ayudas": 2317,
+    "calidadvida": 425,
+    "maestra_costos": 9
+  },
+  "costos_modo": "libro",
+  "ecv_incluida": true,
+  "es_demo": true,
+  "sintetico": true,
+  "semilla": 2026,
+  "descripcion": "Formulario de PRUEBA con corte al 2026-06-30: datos sintéticos, sin personas reales.",
+  "notas": [
+    "consultas.agu_vis: 394 celdas vacías (8%)",
+    "aplicaciones.fecha_programacion: 643 celdas vacías (15%)",
+    "pacientes.eapb: 20 celdas vacías (5%)",
+    "pacientes.sede: 20 celdas vacías (5%)",
+    "ayudas.oct_srf: 232 celdas vacías (10%)",
+    "aplicaciones: 20 registros de paciente-ojo que no existen en la línea base"
+  ]
+}
