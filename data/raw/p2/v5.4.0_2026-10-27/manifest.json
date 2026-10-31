@@ -1,0 +1,34 @@
+{
+  "prestador": "p2",
+  "version_formulario": "5.4.0",
+  "fecha_recepcion": "2026-10-27",
+  "cargado_por": "Generador sintético",
+  "cargado_en": "2026-10-27T21:20:00",
+  "formato": "datos sintéticos (tools/generar_prestador_sintetico.py)",
+  "archivos": {
+    "Formulario_sintetico.xlsx": {
+      "descripcion": "libro del formulario (insumo principal)"
+    },
+    "ecv_prom_dimensiones.xlsx": {
+      "descripcion": "resultado de calidad de vida (ECV)"
+    }
+  },
+  "filas_por_hoja": {
+    "pacientes": 900,
+    "lineabase": 1503,
+    "aplicaciones": 6753,
+    "consultas": 10443,
+    "ayudas": 10079,
+    "calidadvida": 1011,
+    "maestra_costos": 22
+  },
+  "costos_modo": "dummy",
+  "ecv_incluida": true,
+  "es_demo": true,
+  "sintetico": true,
+  "semilla": 2026,
+  "descripcion": "Datos sintéticos de calidad óptima (tools/generar_prestador_sintetico.py); sin personas reales.",
+  "notas": [
+    "Sedes asignadas con el flujo aleatorio de sede del generador (semilla 2026 + 5), 31-oct-2026."
+  ]
+}

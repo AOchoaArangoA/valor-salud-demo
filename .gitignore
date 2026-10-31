@@ -10,4 +10,6 @@ data/processed/*
 !data/processed/p2/
 # Formularios de PRUEBA (tools/generar_formularios_prueba.py): sintéticos, sirven para ensayar el pipeline en la demo
 !data/raw/prueba/
+# Entrega sintética de P2 (tools/generar_prestador_sintetico.py): permite reprocesar P2 desde la app
+!data/raw/p2/
 !data/processed/prueba/
