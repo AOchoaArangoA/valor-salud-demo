@@ -283,8 +283,19 @@ PUNTOS_ESPAGUETI = [("LB", None), ("S16", 16), ("S52", 52), ("S104", 104)]
 UMBRAL_MEJORA_LETRAS = 5
 # Ejemplo ilustrativo para la pestaña de metodología: tres ojos INVENTADOS (no son pacientes) con la AV en letras ETDRS en LB / S16 / S52 / S104.
 EJEMPLO_AV = [("Ojo A", [45, 55, 60, 62]), ("Ojo B", [55, 57, 53, 56]), ("Ojo C", [60, 52, 48, 45])]
-# Equivalencia Snellen (pies) -> letras ETDRS y logMAR, de 20/20 a 20/800 (la misma tabla que usa el pipeline para convertir)
-EQUIV_SNELLEN = [(f"20/{d:g}", letras, round(float(np.log10(d / 20)), 1)) for d, letras in config.SNELLEN_A_ETDRS.items() if 20 <= d <= 800]
+# Equivalencia de agudeza visual de 20/10 a 20/4000, tal como la entregó el equipo experto (revisión del 31-oct-2026):
+# (Snellen decimal, letras ETDRS, Snellen en pies, Snellen en metros, logMAR). CD = cuenta dedos, MM = movimiento de manos.
+EQUIV_SNELLEN = [
+    ("2.00", 100, "20/10", "6/3", -0.3), ("1.60", 95, "20/12.5", "6/4", -0.2), ("1.25", 90, "20/16", "6/5", -0.1),
+    ("1.00", 85, "20/20", "6/6", 0.0), ("0.80", 80, "20/25", "6/7.5", 0.1), ("0.63", 75, "20/32", "6/9", 0.2),
+    ("0.50", 70, "20/40", "6/12", 0.3), ("0.40", 65, "20/50", "6/15", 0.4), ("0.32", 60, "20/63", "6/19", 0.5),
+    ("0.25", 55, "20/80", "6/24", 0.6), ("0.20", 50, "20/100", "6/30", 0.7), ("0.16", 45, "20/125", "6/38", 0.8),
+    ("0.125", 40, "20/160", "6/48", 0.9), ("0.10", 35, "20/200", "6/60", 1.0), ("0.08", 30, "20/250", "6/75", 1.1),
+    ("0.06", 25, "20/320", "6/96", 1.2), ("0.05", 20, "20/400", "6/120", 1.3), ("0.04", 15, "20/500", "6/150", 1.4),
+    ("0.03", 10, "20/630", "6/190", 1.5), ("0.025", 5, "20/800", "6/240", 1.6), ("0.01 (CD)", 2, "20/2000", "6/600", 1.9),
+    ("MM", 0, "20/4000", "6/1200", 2.3),
+]
+COLUMNAS_SNELLEN = ["Snellen decimal", "Letras ETDRS", "Snellen (pies)", "Snellen (metros)", "logMAR"]
 CRITERIOS_ESPAGUETI = ["Aleatoria (reproducible)", "Mayor mejora (Δ AV final)", "Mayor caída (Δ AV final)",
                        "Más seguimiento (con S104)"]
 
@@ -444,4 +455,59 @@ def resumen_bandas_av(df: pd.DataFrame, q1: float, q3: float) -> pd.DataFrame:
             fila[f"Δ AV S{sem} (mediana)"] = c.median() if len(c) else np.nan
             fila[f"n S{sem}"] = int(len(c))
         filas.append(fila)
+    return pd.DataFrame(filas)
+
+
+# ------------------------------------------------------------------ completitud de los resultados del proceso
+# (grupo, columna del mart, nombre, universo): el universo es la columna que dice quién YA podía tener el dato
+# (p. ej. S104 solo para quien lleva 2 años); None = todos los paciente-ojo reingreso.
+COMPLETITUD_RESULTADOS = [
+    ("Identificación y filtros", "diagnostico", "Diagnóstico", None),
+    ("Identificación y filtros", "medicamento_label", "Medicamento", None),
+    ("Identificación y filtros", "sede", "Sede", None),
+    ("Identificación y filtros", "eapb", "EAPB", None),
+    ("Identificación y filtros", "sexo", "Sexo", None),
+    ("Identificación y filtros", "edad", "Edad", None),
+    ("Agudeza visual", "AV_letras_inicial", "AV inicial", None),
+    ("Agudeza visual", "AV_letras_sem16", "AV S16", None),
+    ("Agudeza visual", "AV_letras_sem52", "AV S52", "anio1_completo"),
+    ("Agudeza visual", "AV_letras_sem104", "AV S104", "anio2_completo"),
+    ("OCT", "OCT_inicial", "OCT inicial", None),
+    ("OCT", "OCT_sem16", "OCT S16", None),
+    ("OCT", "OCT_sem52", "OCT S52", "anio1_completo"),
+    ("OCT", "OCT_sem104", "OCT S104", "anio2_completo"),
+    ("OCT", "RetinaSeca_sem52", "Anatomía sin líquido S52", "anio1_completo"),
+    ("OCT", "RetinaSeca_sem104", "Anatomía sin líquido S104", "anio2_completo"),
+    ("Proceso de atención", "Oportunidad_inicio_tto", "Oportunidad de inicio (días)", None),
+    ("Proceso de atención", "Adherencia_final_12", "Adherencia a dosis de carga", None),
+    ("Proceso de atención", "extension_ultima_dosis", "Extensión última dosis", None),
+    ("Proceso de atención", "cumplimiento_anio1", "Cumplimiento año 1", "anio1_completo"),
+    ("Proceso de atención", "cumplimiento_anio2", "Cumplimiento año 2", "anio2_completo"),
+    ("Utilización y costos", "apl_anio1", "Inyecciones año 1", "anio1_completo"),
+    ("Utilización y costos", "apl_anio2", "Inyecciones año 2", "anio2_completo"),
+    ("Utilización y costos", "costofin_anio1", "Costo año 1", "anio1_completo"),
+    ("Utilización y costos", "costofin_anio2", "Costo año 2", "anio2_completo"),
+    ("Calidad de vida", "ecv1", "Encuesta de calidad de vida 1 (total)", None),
+    ("Calidad de vida", "ecv2", "Encuesta de calidad de vida 2 (total)", None),
+]
+
+
+def con_dato(serie: pd.Series) -> pd.Series:
+    """True donde hay dato (un texto vacío cuenta como faltante)."""
+    return serie.notna() & ~serie.astype(str).str.strip().isin(["", "nan", "NaT", "None"])
+
+
+def completitud_resultados(mart: pd.DataFrame) -> pd.DataFrame:
+    filas = []
+    for grupo, col, nombre, universo in COMPLETITUD_RESULTADOS:
+        if col not in mart:
+            filas.append({"Grupo": grupo, "Variable": nombre, "Con dato": 0, "% del total": 0.0, "Podían tenerlo": np.nan,
+                          "% de quienes podían tenerlo": np.nan, "Nota": "La corrida no trae esta variable"})
+            continue
+        ok = con_dato(mart[col])
+        base = mart[universo].fillna(False).astype(bool) if universo and universo in mart else pd.Series(True, index=mart.index)
+        filas.append({"Grupo": grupo, "Variable": nombre, "Con dato": int(ok.sum()), "% del total": ok.mean() * 100 if len(ok) else np.nan,
+                      "Podían tenerlo": int(base.sum()), "% de quienes podían tenerlo": ok[base].mean() * 100 if base.any() else np.nan,
+                      "Nota": "" if not universo else ("Solo con 1 año de seguimiento posible" if universo == "anio1_completo"
+                                                      else "Solo con 2 años de seguimiento posible")})
     return pd.DataFrame(filas)

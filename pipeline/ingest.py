@@ -19,7 +19,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
-from . import config
+from . import config, registro
 from .extract import leer_hojas
 from .main import ejecutar
 from .utils import get_logger
@@ -94,7 +94,7 @@ def _carpeta_libre(base: Path, nombre: str) -> Path:
     return destino
 
 
-def registrar_entrega(*, prestador: str, version: str, usuario: str, libro: bytes, libro_nombre: str,
+def _registrar_entrega(*, prestador: str, version: str, usuario: str, libro: bytes, libro_nombre: str,
                       ecv: Optional[bytes] = None, ecv_nombre: str = "ecv.xlsx",
                       costos_modo: str = "libro", costos: Optional[bytes] = None, costos_nombre: str = "costos.xlsx",
                       raiz: Optional[Path] = None, progreso: Callable[[str], None] = lambda m: None,
@@ -171,6 +171,23 @@ def registrar_entrega(*, prestador: str, version: str, usuario: str, libro: byte
             shutil.rmtree(paso, ignore_errors=True)
 
 
+def _resumen_resultado(rec: Dict, processed: Path) -> None:
+    rec["prestador"], rec["carpeta"], rec["resultados"] = processed.parent.name, processed.name, str(processed)
+    try:
+        rec["filas_mart"] = json.loads((processed / "metadata.json").read_text(encoding="utf-8")).get("filas_mart")
+    except (OSError, ValueError):
+        pass
+
+
+def registrar_entrega(**kw) -> Dict[str, Path]:
+    """Igual que _registrar_entrega, y además deja la ejecución (éxito o falla) en la bitácora (pipeline/registro.py)."""
+    with registro.ejecucion("Carga desde el tablero", raiz=kw.get("raiz"), prestador=kw.get("prestador"), version=kw.get("version"),
+                            usuario=kw.get("usuario"), archivo=kw.get("libro_nombre")) as rec:
+        res = _registrar_entrega(**kw)
+        _resumen_resultado(rec, res["processed"])
+        return res
+
+
 def reprocesar(raw_dir: Path, *, costos_modo: str = "libro", costos: Optional[Path] = None,
                ecv: Optional[Path] = None, raiz: Optional[Path] = None) -> Path:
     """Vuelve a correr el pipeline sobre una entrega que ya está en data/raw (sin copiar nada).
@@ -186,7 +203,9 @@ def reprocesar(raw_dir: Path, *, costos_modo: str = "libro", costos: Optional[Pa
     if libro is None:
         raise CargaError(f"No hay libro .xlsm/.xlsx en {raw_dir}")
     destino = raiz / "processed" / raw_dir.parent.name / raw_dir.name
-    with _Bloqueo(raiz):
+    with registro.ejecucion("Reproceso de una entrega", raiz=raiz, prestador=raw_dir.parent.name, version=manifest.get("version_formulario"),
+                            usuario=manifest.get("cargado_por"), archivo=libro.name) as rec, _Bloqueo(raiz):
+        rec["destino"] = str(destino)
         return ejecutar(libro, destino, costos_modo=costos_modo, costos_path=costos, ecv_path=ecv, prestador=raw_dir.parent.name,
                         extra_meta={"version": manifest.get("version_formulario"), "cargado_por": manifest.get("cargado_por", "carga inicial"),
                                     "carpeta": raw_dir.name})

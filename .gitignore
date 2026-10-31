@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 .venv/
+
+# Datos de prestadores: los formularios y resultados reales NUNCA van al repositorio (solo la demo sintética P2)
+data/raw/
+data/logs/
+data/.carga.lock
+data/processed/*
+!data/processed/p2/

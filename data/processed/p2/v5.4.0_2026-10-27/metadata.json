@@ -22,5 +22,8 @@
   "es_demo": true,
   "sintetico": true,
   "semilla": 2026,
-  "descripcion": "Datos sintéticos de calidad óptima (tools/generar_prestador_sintetico.py); sin personas reales."
+  "descripcion": "Datos sintéticos de calidad óptima (tools/generar_prestador_sintetico.py); sin personas reales.",
+  "ajustes_posteriores": [
+    "Sede: 3 sedes asignadas por paciente (50/30/20 %, semilla 2026) sobre los datos procesados, para poder probar el filtro de sede; el generador sintético producía una sola sede."
+  ]
 }

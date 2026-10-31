@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-from . import config
+from . import completitud, config, registro
 from .extract import es_maestra_dummy, leer_ecv, leer_hojas, leer_maestra_costos
 from .load import escribir_metadata, guardar
 from .mart import construir_mart
@@ -48,6 +48,7 @@ def ejecutar(xlsm: Optional[Path] = None, output_dir: Optional[Path] = None, exc
     t0 = time.time()
     xlsm = Path(xlsm or config.XLSM_PATH or "")
     datos = leer_hojas(xlsm)
+    reporte_insumo = completitud.calcular(datos)   # antes de transformar: es la foto del formulario tal como llegó
 
     log.info("== BEV: adherencia, evolución AV/OCT, respondedor")
     bev = transformar_bev(datos)
@@ -66,6 +67,7 @@ def ejecutar(xlsm: Optional[Path] = None, output_dir: Optional[Path] = None, exc
 
     destino = Path(output_dir or config.OUTPUT_DIR)
     guardar({**bev, **costos, "ecv": ecv, "tablero_pteojo": mart}, destino, excel=excel)
+    completitud.guardar(destino, reporte_insumo)
     if costos_modo == "auto":
         fuente = config.COSTOS_MAESTRA_PATH.name if config.COSTOS_MAESTRA_PATH else "hoja maestra_costos del libro"
     else:
@@ -95,7 +97,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--excel", action="store_true", help="Además de parquet, escribe los Excel con los nombres de los notebooks")
     args = ap.parse_args(argv)
     try:
-        ejecutar(args.xlsm, args.output_dir, args.excel)
+        with registro.ejecucion("Línea de comandos", archivo=Path(args.xlsm or config.XLSM_PATH or "").name, prestador=config.PRESTADOR) as rec:
+            rec["resultados"] = str(ejecutar(args.xlsm, args.output_dir, args.excel))
     except (FileNotFoundError, KeyError, ValueError) as e:   # insumos ausentes o con estructura distinta
         log.error("%s", e)
         return 2
