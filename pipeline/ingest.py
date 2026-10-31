@@ -1,6 +1,6 @@
 """Carga de un insumo nuevo: valida, guarda con la convención de data/raw, corre el pipeline y publica.
 
-Flujo (lo usa la pantalla "Cargar insumo" del tablero, pero funciona sin Streamlit):
+Flujo (lo usa la página «Pipeline de datos» de la app, pero funciona sin Streamlit):
     1. valida el libro en una carpeta de paso (.staging): hojas, filas y columnas requeridas;
     2. lo guarda en  <DATA_ROOT>/raw/<prestador>/v<version>_<fecha>/  con su manifest.json;
     3. corre el pipeline y deja los resultados en  <DATA_ROOT>/processed/<prestador>/v<version>_<fecha>/ .
@@ -17,7 +17,7 @@ import time
 import uuid
 from datetime import date, datetime
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 from . import config, registro
 from .extract import leer_hojas
@@ -75,6 +75,8 @@ def validar_libro(ruta: Path) -> Dict[str, int]:
     except FileNotFoundError as e:
         raise CargaError(str(e))
     except (KeyError, ValueError) as e:
+        if "Excel file format" in str(e) or "engine" in str(e):   # pandas no reconoce el archivo como Excel
+            raise CargaError(f"No se pudo leer '{Path(ruta).name}' como libro de Excel: el archivo está dañado o no es un .xlsx/.xlsm.")
         raise CargaError(str(e).strip("'\""))
     except Exception as e:  # archivo corrupto, no es un Excel, etc.
         raise CargaError(f"No se pudo leer el archivo como libro de Excel: {e}")
@@ -179,33 +181,89 @@ def _resumen_resultado(rec: Dict, processed: Path) -> None:
         pass
 
 
-def registrar_entrega(**kw) -> Dict[str, Path]:
-    """Igual que _registrar_entrega, y además deja la ejecución (éxito o falla) en la bitácora (pipeline/registro.py)."""
-    with registro.ejecucion("Carga desde el tablero", raiz=kw.get("raiz"), prestador=kw.get("prestador"), version=kw.get("version"),
-                            usuario=kw.get("usuario"), archivo=kw.get("libro_nombre")) as rec:
+def _con_log(progreso: Optional[Callable[[str], None]]) -> Callable[[str], None]:
+    """Los avisos de avance («Validando el libro…») también quedan en el log de la ejecución."""
+    def avance(mensaje: str) -> None:
+        log.info(mensaje)
+        if progreso:
+            progreso(mensaje)
+    return avance
+
+
+def registrar_entrega(*, en_vivo: Optional[Callable[[str], None]] = None, **kw) -> Dict[str, Path]:
+    """Igual que _registrar_entrega, y además deja la ejecución (éxito o falla) en la bitácora (pipeline/registro.py).
+    `en_vivo` recibe cada línea del log mientras el proceso corre."""
+    kw["progreso"] = _con_log(kw.get("progreso"))
+    with registro.ejecucion("Carga de un formulario nuevo", raiz=kw.get("raiz"), en_vivo=en_vivo, prestador=kw.get("prestador"),
+                            version=kw.get("version"), usuario=kw.get("usuario"), archivo=kw.get("libro_nombre")) as rec:
         res = _registrar_entrega(**kw)
         _resumen_resultado(rec, res["processed"])
         return res
 
 
-def reprocesar(raw_dir: Path, *, costos_modo: str = "libro", costos: Optional[Path] = None,
-               ecv: Optional[Path] = None, raiz: Optional[Path] = None) -> Path:
+def _archivo_marcado(raw_dir: Path, manifest: Dict, prefijos: tuple) -> Optional[Path]:
+    """El archivo de la entrega cuya descripción en el manifest empieza por alguno de los prefijos (p. ej. 'tabla de costos')."""
+    for nombre, d in manifest.get("archivos", {}).items():
+        desc = str(d.get("descripcion", "") if isinstance(d, dict) else d).lower()
+        if desc.startswith(prefijos) and (raw_dir / nombre).is_file():
+            return raw_dir / nombre
+    return None
+
+
+def listar_entregas(raiz: Optional[Path] = None) -> List[Dict]:
+    """Entregas guardadas en <raiz>/raw/<prestador>/<versión>/ (las que tienen manifest), la más reciente primero."""
+    raw = Path(raiz or config.DATA_ROOT) / "raw"
+    out = []
+    for m in raw.glob("*/*/manifest.json") if raw.is_dir() else []:
+        if m.parent.parent.name.startswith("."):
+            continue
+        try:
+            man = json.loads(m.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        out.append({"ruta": m.parent, "prestador": m.parent.parent.name, "carpeta": m.parent.name, "manifest": man})
+    return sorted(out, key=lambda e: str(e["manifest"].get("cargado_en") or e["manifest"].get("fecha_recepcion") or ""), reverse=True)
+
+
+def reprocesar(raw_dir: Path, *, costos_modo: Optional[str] = None, costos: Optional[Path] = None, ecv: Optional[Path] = None,
+               raiz: Optional[Path] = None, usuario: Optional[str] = None, en_vivo: Optional[Callable[[str], None]] = None) -> Path:
     """Vuelve a correr el pipeline sobre una entrega que ya está en data/raw (sin copiar nada).
-    Los resultados quedan en <raiz>/processed/<prestador>/<carpeta> y reemplazan los de esa misma carpeta."""
+    Si no se indican, la tabla de costos y el resultado de calidad de vida se toman de la propia entrega (según su manifest).
+    Los resultados se calculan aparte y solo al terminar bien reemplazan los de <raiz>/processed/<prestador>/<carpeta>:
+    si el proceso falla, la versión anterior sigue intacta."""
     raiz = Path(raiz or config.DATA_ROOT)
     raw_dir = Path(raw_dir)
     manifest = json.loads((raw_dir / "manifest.json").read_text(encoding="utf-8"))
-    # el libro es el archivo que el manifest marca como insumo principal; si no, el único .xlsm
-    marcados = [n for n, d in manifest.get("archivos", {}).items()
-                if str(d.get("descripcion", d) if isinstance(d, dict) else d).lower().startswith(("insumo", "libro"))]
-    libro = next((raw_dir / n for n in marcados if (raw_dir / n).is_file()),
-                 next((p for p in sorted(raw_dir.glob("*.xlsm")) if not p.name.startswith("~$")), None))
+    libro = _archivo_marcado(raw_dir, manifest, ("insumo", "libro")) or next(
+        (p for p in sorted(raw_dir.glob("*.xls[xm]")) if not p.name.startswith("~$") and p.name != (ecv.name if ecv else "")), None)
     if libro is None:
         raise CargaError(f"No hay libro .xlsm/.xlsx en {raw_dir}")
+    ecv = ecv or _archivo_marcado(raw_dir, manifest, ("resultado de calidad de vida", "ecv"))
+    costos = costos or _archivo_marcado(raw_dir, manifest, ("tabla de costos",))
+    costos_modo = costos_modo or ("archivo" if costos else manifest.get("costos_modo", "libro"))
     destino = raiz / "processed" / raw_dir.parent.name / raw_dir.name
-    with registro.ejecucion("Reproceso de una entrega", raiz=raiz, prestador=raw_dir.parent.name, version=manifest.get("version_formulario"),
-                            usuario=manifest.get("cargado_por"), archivo=libro.name) as rec, _Bloqueo(raiz):
+    with registro.ejecucion("Reproceso de una entrega guardada", raiz=raiz, en_vivo=en_vivo, prestador=raw_dir.parent.name,
+                            version=manifest.get("version_formulario"), usuario=usuario or manifest.get("cargado_por"),
+                            archivo=libro.name) as rec, _Bloqueo(raiz):
         rec["destino"] = str(destino)
-        return ejecutar(libro, destino, costos_modo=costos_modo, costos_path=costos, ecv_path=ecv, prestador=raw_dir.parent.name,
-                        extra_meta={"version": manifest.get("version_formulario"), "cargado_por": manifest.get("cargado_por", "carga inicial"),
-                                    "carpeta": raw_dir.name})
+        log.info("Entrega: %s/%s · libro: %s · costos: %s · calidad de vida: %s", raw_dir.parent.name, raw_dir.name, libro.name,
+                 costos.name if costos else costos_modo, ecv.name if ecv else "sin archivo")
+        log.info("Validando el libro…")
+        validar_libro(libro)   # un libro dañado o incompleto se informa con un mensaje claro, igual que en una carga nueva
+        temporal = destino.parent / f".{destino.name}.nuevo-{uuid.uuid4().hex[:6]}"
+        try:
+            try:
+                ejecutar(libro, temporal, costos_modo=costos_modo, costos_path=costos, ecv_path=ecv, prestador=raw_dir.parent.name,
+                         extra_meta={"version": manifest.get("version_formulario"), "cargado_por": manifest.get("cargado_por", "carga inicial"),
+                                     "carpeta": raw_dir.name, **{k: manifest[k] for k in ("es_demo", "sintetico", "semilla", "descripcion") if k in manifest}})
+            except (FileNotFoundError, KeyError, ValueError) as e:
+                raise CargaError(f"El archivo es legible pero el proceso no pudo calcularlo: {e}")
+            respaldo = destino.parent / f".{destino.name}.anterior-{uuid.uuid4().hex[:6]}"
+            if destino.exists():
+                destino.rename(respaldo)
+            temporal.rename(destino)
+            shutil.rmtree(respaldo, ignore_errors=True)
+        finally:
+            shutil.rmtree(temporal, ignore_errors=True)
+        _resumen_resultado(rec, destino)
+        return destino

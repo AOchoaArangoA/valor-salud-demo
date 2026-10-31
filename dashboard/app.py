@@ -2,8 +2,7 @@
 
 Enruta las páginas con st.navigation:
   - Tablero                      -> dashboard/tablero.py  (los 7 niveles de gestión)
-  - Cargar y procesar            -> dashboard/paginas/carga.py  (corre el pipeline desde la app)
-  - Historial de ejecuciones     -> dashboard/paginas/historial.py  (bitácora del pipeline)
+  - Pipeline de datos            -> dashboard/paginas/pipeline.py  (ejecuta el pipeline con su log y muestra el historial)
   - Completitud de datos         -> dashboard/paginas/completitud.py  (formulario y resultados del proceso)
 En todas se muestran la última actualización de datos y el pie de página.
 
@@ -19,7 +18,6 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import comun  # noqa: E402
-from pipeline import config  # noqa: E402  (la ruta del proyecto la agrega logic)
 
 # Streamlit conserva los módulos importados en memoria entre ejecuciones (y en Google Drive no siempre detecta los cambios):
 # se recargan, en orden de dependencia, para que la app nunca use una versión vieja de logic.py ni de pipeline/.
@@ -33,14 +31,11 @@ st.set_page_config(page_title="Valor en Salud · Retina", page_icon="👁️", l
 comun.estilos()
 
 tablero = st.Page("tablero.py", title="Tablero", icon=":material/dashboard:", default=True)
-carga = st.Page("paginas/carga.py", title="Cargar y procesar", icon=":material/upload_file:", url_path="cargar")
-historial = st.Page("paginas/historial.py", title="Historial de ejecuciones", icon=":material/history:", url_path="historial")
+pipeline_pg = st.Page("paginas/pipeline.py", title="Pipeline de datos", icon=":material/play_circle:", url_path="pipeline")
 completitud = st.Page("paginas/completitud.py", title="Completitud de datos", icon=":material/fact_check:", url_path="completitud")
-comun.PAGINAS.update({"tablero": tablero, "carga": carga, "historial": historial, "completitud": completitud})
+comun.PAGINAS.update({"tablero": tablero, "pipeline": pipeline_pg, "completitud": completitud})
 
-# Despliegue de solo consulta (VLM_CARGA_HABILITADA=0, p. ej. la demostración en la nube): sin la página de carga
-procesos = ([carga] if config.CARGA_HABILITADA else []) + [historial, completitud]
-pagina = st.navigation({"": [tablero], "Datos y procesos": procesos})
+pagina = st.navigation({"": [tablero], "Datos y procesos": [pipeline_pg, completitud]})
 comun.aviso_actualizacion()
 pagina.run()
 comun.pie()

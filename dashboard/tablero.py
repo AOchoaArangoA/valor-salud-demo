@@ -58,7 +58,7 @@ def pantalla_clave() -> None:
 CORRIDAS = L.listar_corridas()
 if not CORRIDAS:
     st.title("Valor en Salud · Retina")
-    st.info("Todavía no hay datos procesados. Vaya a **Cargar y procesar** (barra lateral) y suba el libro del formulario.")
+    st.info("Todavía no hay datos procesados. Vaya a **Pipeline de datos** (barra lateral) y suba el libro del formulario.")
     st.stop()
 
 _cifradas = {str(c["ruta"]) for c in CORRIDAS if seguridad.carpeta_cifrada(c["ruta"])}
@@ -786,7 +786,7 @@ if VISTA == SECCIONES[2]:
         st.caption("Cuenta los paciente-ojo reingreso por la cantidad de dosis recibidas en el año 1 (hasta la semana 52) y en el año 2 (semana 52 a 104).")
     with c_int:
         if apl_todas is None:
-            st.info("Esta corrida es anterior al detalle de programación y extensión: vuelva a procesar el insumo (sección Cargar insumo) para verlo.")
+            st.info("Esta corrida es anterior al detalle de programación y extensión: vuelva a ejecutar el pipeline de esta entrega (página Pipeline de datos) para verlo.")
         else:
             ext = apl_todas[apl_todas["con_dosis"] >= 2].copy()
             ext["dosis"] = ext["con_dosis"].clip(upper=9).astype(int).astype(str).replace("9", "9+")
@@ -823,7 +823,7 @@ if VISTA == SECCIONES[2]:
     st.caption("Cumplimiento = fecha real de la dosis frente a la fecha programada en la dosis anterior. Mismo universo que las tarjetas: "
                "paciente-ojo reingreso con 2 años de seguimiento posible y aplicaciones de los años 1 y 2.")
     if apl_todas is None:
-        st.info("Esta corrida es anterior al detalle de programación y extensión: vuelva a procesar el insumo (sección Cargar insumo) para verlo.")
+        st.info("Esta corrida es anterior al detalle de programación y extensión: vuelva a ejecutar el pipeline de esta entrega (página Pipeline de datos) para verlo.")
     else:
         apl = apl_todas[apl_todas["pacienteojoreingreso"].isin(IDS_2ANIOS)]
         if "dias_desde_primera" in apl.columns:
@@ -968,7 +968,7 @@ if VISTA == SECCIONES[4]:
     tot_t = todos[todos["clave"] == "Total"].iloc[0] if not todos.empty else None
     tot = perfil[perfil["clave"] == "Total"].iloc[0] if not perfil.empty else None
     if tot_t is None or (tot_t["n1"] == 0 and tot_t["n2"] == 0):
-        st.markdown(f'<span class="nd">{NO_EVAL} Cargue el resultado de calidad de vida del prestador en "Cargar insumo".</span>', unsafe_allow_html=True)
+        st.markdown(f'<span class="nd">{NO_EVAL} Cargue el resultado de calidad de vida del prestador en «Pipeline de datos».</span>', unsafe_allow_html=True)
     else:
         c = st.columns(2)
         card(c[0], f"Puntaje total · {L.N_ECV1}", L.f_num(tot_t["media1"], 1), int(tot_t["n1"]), ayuda="Promedio de todos los pacientes que contestaron la encuesta 1.")
@@ -1151,7 +1151,7 @@ if VISTA == SECCIONES[6]:
         st.plotly_chart(fig, use_container_width=True, key="met-snellen")
     with s2:
         st.dataframe(eq, hide_index=True, height=380, column_config={"logMAR": st.column_config.NumberColumn(format="%.1f")})
-    st.caption("De 20/10 a 20/4000. CD = cuenta dedos (≈ 20/2000, 2 letras); MM = movimiento de manos (≈ 20/4000, 0 letras). "
+    st.caption("De 20/10 a 20/4000. CD = cuenta dedos (≈ 20/2000) y MM = movimiento de manos (≈ 20/4000): desde ahí la escala ya no tiene letras (0). "
                "La percepción de luz y la no percepción de luz también equivalen a 0 letras.")
     st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora. 10 letras equivalen aproximadamente a 2 líneas de la cartilla.")
 

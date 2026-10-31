@@ -178,5 +178,7 @@ ECV_META_TOTAL = 70.0
 _rp = os.getenv("VLM_RESPONDEDOR_PRUEBA", "").strip()
 RESPONDEDOR_PRUEBA = float(_rp) if _rp else None
 
-# Despliegues de solo consulta (p. ej. demostración en la nube): VLM_CARGA_HABILITADA=0 oculta "Cargar insumo".
+# Despliegues de solo consulta (p. ej. demostración en la nube): VLM_CARGA_HABILITADA=0 oculta la carga de formularios nuevos (página «Pipeline de datos»).
 CARGA_HABILITADA: bool = os.getenv("VLM_CARGA_HABILITADA", "1").strip().lower() not in ("0", "false", "no")
+# Volver a correr el pipeline sobre una entrega ya guardada en data/raw (no sube archivos nuevos). VLM_EJECUCION_HABILITADA=0 lo oculta.
+EJECUCION_HABILITADA: bool = os.getenv("VLM_EJECUCION_HABILITADA", "1").strip().lower() not in ("0", "false", "no")

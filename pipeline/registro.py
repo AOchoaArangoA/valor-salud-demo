@@ -14,7 +14,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional
+from typing import Callable, Dict, Iterator, List, Optional
 
 from . import config
 
@@ -28,9 +28,10 @@ def carpeta_logs(raiz: Optional[Path] = None) -> Path:
 class _Captura(logging.Handler):
     """Copia a una lista los mensajes de los loggers del pipeline mientras dura la ejecución."""
 
-    def __init__(self):
+    def __init__(self, en_vivo: Optional[Callable[[str], None]] = None):
         super().__init__(level=logging.INFO)
         self.lineas: List[str] = []
+        self.en_vivo = en_vivo
         self.avisos = 0
         self.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-7s | %(name)s | %(message)s", "%H:%M:%S"))
 
@@ -38,15 +39,21 @@ class _Captura(logging.Handler):
         if record.levelno >= logging.WARNING:
             self.avisos += 1
         self.lineas.append(self.format(record))
+        if self.en_vivo:
+            try:
+                self.en_vivo(self.lineas[-1])
+            except Exception:  # noqa: BLE001 -- mostrar el log en pantalla nunca debe tumbar el proceso
+                self.en_vivo = None
 
 
 @contextmanager
-def ejecucion(origen: str, raiz: Optional[Path] = None, **campos) -> Iterator[Dict]:
+def ejecucion(origen: str, raiz: Optional[Path] = None, en_vivo: Optional[Callable[[str], None]] = None, **campos) -> Iterator[Dict]:
     """Registra una ejecución. Quien la usa puede completar el dict (p. ej. 'resultados', 'filas_mart').
-    Si ocurre un error se registra como «falla» con su mensaje y el error se vuelve a lanzar."""
+    Si ocurre un error se registra como «falla» con su mensaje y el error se vuelve a lanzar.
+    `en_vivo`: función que recibe cada línea del log apenas se escribe (la app la usa para mostrar el proceso en pantalla)."""
     rec: Dict = {"id": f"{datetime.now():%Y%m%d-%H%M%S}-{uuid.uuid4().hex[:4]}", "origen": origen,
                  "inicio": datetime.now().isoformat(timespec="seconds"), **campos}
-    captura = _Captura()
+    captura = _Captura(en_vivo)
     raiz_log = logging.getLogger("pipeline")
     nivel_previo = raiz_log.level
     raiz_log.addHandler(captura)
@@ -60,6 +67,8 @@ def ejecucion(origen: str, raiz: Optional[Path] = None, **campos) -> Iterator[Di
         rec["estado"] = "falla"
         rec["mensaje"] = str(e).strip() or type(e).__name__
         captura.lineas.append(f"{datetime.now():%H:%M:%S} | ERROR   | {type(e).__name__}: {rec['mensaje']}")
+        if captura.en_vivo:
+            captura.en_vivo(captura.lineas[-1])
         raise
     finally:
         raiz_log.removeHandler(captura)
