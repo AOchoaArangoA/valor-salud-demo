@@ -1,0 +1,863 @@
+{
+ "hojas": {
+  "pacientes": [
+   "id_paciente",
+   "fecha_dilig",
+   "tipo_doc",
+   "numero_doc",
+   "nombres",
+   "apellidos",
+   "fecha_nac",
+   "edad",
+   "sexo",
+   "peso",
+   "talla",
+   "imc",
+   "eapb",
+   "regimen",
+   "sede",
+   "estatus_fumar",
+   "ant_diabetes",
+   "ant_insulina",
+   "ant_hta",
+   "ant_dislipidemia",
+   "actividad_fisica",
+   "etnia",
+   "fecha_dx_dm",
+   "años_dm",
+   "hba1c"
+  ],
+  "lineabase": [
+   "id_registro",
+   "fecha_registro",
+   "pacienteojoreingreso",
+   "pacienteojo",
+   "tipo_doc",
+   "numero_doc",
+   "ojo",
+   "medico",
+   "tipo_paciente",
+   "medicamento",
+   "reingreso",
+   "dx_fecha",
+   "dx_cod_ppal",
+   "dx_ppal",
+   "dx_cod_sec",
+   "dx_sec",
+   "av_agu_vis",
+   "av_agu_vis_con",
+   "av_etdrs",
+   "av_etdrs_con",
+   "av_cartilla",
+   "av_distancia",
+   "av_tipo",
+   "oct_ecr",
+   "oct_equipo",
+   "oct_tipo_mnv",
+   "oct_dep",
+   "oct_irf",
+   "oct_srf",
+   "oct_hemorragia",
+   "oct_quistes",
+   "oct_hrfs",
+   "oct_atrofia",
+   "oct_fibrosis",
+   "com_opa_med",
+   "com_ambliopia",
+   "com_maculopatia",
+   "com_glau_neu",
+   "com_evr",
+   "tp_afli",
+   "tp_aflifecini",
+   "tp_aflifecult",
+   "tp_aflimestto",
+   "tp_aflidosis",
+   "tp_rani",
+   "tp_ranifecini",
+   "tp_ranifecult",
+   "tp_ranimestto",
+   "tp_ranidosis",
+   "tp_beva",
+   "tp_bevafecini",
+   "tp_bevafecult",
+   "tp_bevamestto",
+   "tp_bevadosis",
+   "tp_brolu",
+   "tp_brolufecini",
+   "tp_brolufecult",
+   "tp_brolumestto",
+   "tp_broludosis",
+   "tp_fari",
+   "tp_farifecini",
+   "tp_farifecult",
+   "tp_farimestto",
+   "tp_faridosis",
+   "tp_dexa",
+   "tp_dexafecini",
+   "tp_dexafecult",
+   "tp_dexamestto",
+   "tp_dexadosis",
+   "ota_fotoco",
+   "ota_cx_ret",
+   "ota_caps",
+   "ota_cx_cat",
+   "egreso_fecha",
+   "egreso_causa",
+   "egreso_desc",
+   "av_num",
+   "av_con_num"
+  ],
+  "aplicaciones": [
+   "id_registro",
+   "fecha_registro",
+   "pacienteojoreingreso",
+   "pacienteojo",
+   "tipo_doc",
+   "numero_doc",
+   "ojo",
+   "pac_ojo_tto_fecha",
+   "pac_ojo_rei_tto",
+   "pac_ojo_rei_tto_consec",
+   "reingreso",
+   "tipo_tto",
+   "costo_tratamiento",
+   "con_dosis",
+   "dosis_inicial",
+   "fecha_aplicacion",
+   "esquema",
+   "molecula",
+   "costo_molecula",
+   "semana_extension",
+   "fecha_programacion",
+   "medico",
+   "dx_ppal",
+   "dx_ppal_desc",
+   "cambio_molecula_motivo",
+   "plan_pago"
+  ],
+  "consultas": [
+   "id_registro",
+   "fecha_registro",
+   "pacienteojoreingreso",
+   "pacienteojo",
+   "tipo_doc",
+   "numero_doc",
+   "ojo",
+   "pac_ojo_consulta_fecha",
+   "pac_ojo_rei_consulta",
+   "pac_ojo_rei_consulta_consec",
+   "reingreso",
+   "tipo_consulta",
+   "costo",
+   "con_consulta",
+   "fecha_consulta",
+   "agu_vis",
+   "av_vis_con",
+   "etdrs",
+   "etdrs_con",
+   "av_tipo",
+   "cod_dx_ppal",
+   "dx_ppal",
+   "cod_dx_sec",
+   "dx_sec",
+   "medico",
+   "plan_pago",
+   "com_ambliopia",
+   "com_maculopatia",
+   "com_opa_med",
+   "com_glau_neu",
+   "com_evr",
+   "endoftalmitis",
+   "tipo_endoftalmitis",
+   "agu_vis_num",
+   "agu_vis_con_num"
+  ],
+  "ayudas": [
+   "id_registro",
+   "fecha_registro",
+   "pacienteojoreingreso",
+   "pacienteojo",
+   "tipo_doc",
+   "numero_doc",
+   "ojo",
+   "pac_ojo_ayuda_fecha",
+   "pac_ojo_rei_ayuda",
+   "pac_ojo_rei_ayuda_consec",
+   "tipo_ayuda",
+   "costo",
+   "fecha_ayuda",
+   "con_ayuda",
+   "oct",
+   "tipo_mnv",
+   "plan_pago",
+   "reingreso",
+   "oct_dep",
+   "oct_irf",
+   "oct_srf",
+   "oct_hemorragia",
+   "oct_quistes",
+   "oct_hrfs",
+   "oct_atrofia",
+   "oct_fibrosis"
+  ],
+  "calidadvida": [
+   "id_encuesta",
+   "fecharegistro",
+   "encuestapac",
+   "fechaencuesta",
+   "tipo_doc",
+   "numero_doc",
+   "nro_encuesta",
+   "idencuestador",
+   "preg1",
+   "preg2",
+   "preg3",
+   "preg4",
+   "preg5",
+   "preg6",
+   "preg7",
+   "preg8",
+   "preg9",
+   "preg10",
+   "preg11",
+   "preg12",
+   "preg13",
+   "preg14",
+   "preg15",
+   "preg16",
+   "preg17",
+   "preg18",
+   "preg19",
+   "preg20",
+   "preg21",
+   "preg22",
+   "preg23",
+   "preg24",
+   "preg25",
+   "preg26",
+   "preg27",
+   "Costo"
+  ],
+  "maestra_costos": [
+   "BaseDatos",
+   "Menu",
+   "Grupo",
+   "Describe",
+   "Costo promedio unitario",
+   "Periodo costo",
+   "Año"
+  ]
+ },
+ "vocabulario_calidadvida": {
+  "preg1": [
+   [
+    "Excelente",
+    100.0
+   ],
+   [
+    "Buena",
+    80.0
+   ],
+   [
+    "Regular",
+    60.0
+   ],
+   [
+    "Mala",
+    40.0
+   ],
+   [
+    "Muy mala",
+    20.0
+   ]
+  ],
+  "preg2": [
+   [
+    "Todo el tiempo",
+    100.0
+   ],
+   [
+    "La mayor parte del tiempo",
+    75.0
+   ],
+   [
+    "Parte del tiempo",
+    50.0
+   ],
+   [
+    "Una pequeña parte del tiempo",
+    25.0
+   ],
+   [
+    "Nunca",
+    0.0
+   ]
+  ],
+  "preg3": [
+   [
+    "Nada",
+    100.0
+   ],
+   [
+    "Un poco",
+    75.0
+   ],
+   [
+    "Moderado",
+    50.0
+   ],
+   [
+    "Severo",
+    25.0
+   ],
+   [
+    "Muy severo",
+    0.0
+   ]
+  ],
+  "preg4": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg5": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ],
+   [
+    "dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg6": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg7": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg8": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg9": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ]
+  ],
+  "preg10": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ]
+  ],
+  "preg11": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg12": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ]
+  ],
+  "preg13": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg14": [
+   [
+    "Si",
+    null
+   ],
+   [
+    "No",
+    null
+   ],
+   [
+    "si",
+    null
+   ],
+   [
+    "NO",
+    null
+   ]
+  ],
+  "preg15": [
+   [
+    "Dejó de hacerlo",
+    null
+   ],
+   [
+    "Nunca ha manejado",
+    null
+   ]
+  ],
+  "preg16": [
+   [
+    "Por otras razones",
+    null
+   ],
+   [
+    "Sobre todo por la visión",
+    null
+   ],
+   [
+    "Por la visión y otras razones",
+    null
+   ]
+  ],
+  "preg17": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ]
+  ],
+  "preg18": [
+   [
+    "Ninguna dificultad",
+    100.0
+   ],
+   [
+    "Un poco de dificultad",
+    75.0
+   ],
+   [
+    "Dificultad moderada",
+    50.0
+   ],
+   [
+    "Extrema dificultad",
+    25.0
+   ],
+   [
+    "Dejó de hacerlo a causa de su visión",
+    0.0
+   ],
+   [
+    "Dejó de hacerlo por otras razones o no está interesado en hacerlo",
+    NaN
+   ]
+  ],
+  "preg19": [
+   [
+    "Nunca",
+    100.0
+   ],
+   [
+    "Una pequeña parte del tiempo",
+    75.0
+   ],
+   [
+    "Parte del tiempo",
+    50.0
+   ],
+   [
+    "La mayor parte del tiempo",
+    25.0
+   ],
+   [
+    "Todo el tiempo",
+    0.0
+   ]
+  ],
+  "preg20": [
+   [
+    "Nunca",
+    100.0
+   ],
+   [
+    "Una pequeña parte del tiempo",
+    75.0
+   ],
+   [
+    "Parte del tiempo",
+    50.0
+   ],
+   [
+    "La mayor parte del tiempo",
+    25.0
+   ],
+   [
+    "Todo el tiempo",
+    0.0
+   ]
+  ],
+  "preg21": [
+   [
+    "Nunca",
+    100.0
+   ],
+   [
+    "Una pequeña parte del tiempo",
+    75.0
+   ],
+   [
+    "Parte del tiempo",
+    50.0
+   ],
+   [
+    "La mayor parte del tiempo",
+    25.0
+   ],
+   [
+    "Todo el tiempo",
+    0.0
+   ]
+  ],
+  "preg22": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "No está seguro/A",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ],
+  "preg23": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ],
+  "preg24": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ],
+  "preg25": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ],
+  "preg26": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ],
+  "preg27": [
+   [
+    "Definitivamente falsa",
+    100.0
+   ],
+   [
+    "Mayormente falsa",
+    75.0
+   ],
+   [
+    "No está seguro/a",
+    50.0
+   ],
+   [
+    "Mayormente cierta",
+    25.0
+   ],
+   [
+    "Definitivamente cierta",
+    0.0
+   ]
+  ]
+ }
+}

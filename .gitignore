@@ -13,3 +13,5 @@ data/processed/*
 # Entrega sintética de P2 (tools/generar_prestador_sintetico.py): permite reprocesar P2 desde la app
 !data/raw/p2/
 !data/processed/prueba/
+# Salida del generador sintético sin --registrar (es la misma entrega que data/raw/p2/)
+data/reference/sintetico/
