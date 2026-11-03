@@ -124,9 +124,9 @@ MAPA_AV_ESPECIAL = {20000.0: 4000, 200000.0: 10000, 2000000.0: 20000}  # HBW, LP
 SNELLEN_A_ETDRS = {
     10.0: 100, 12.5: 95, 16.0: 90, 20.0: 85, 25.0: 80, 32.0: 75, 40.0: 70, 50.0: 65, 63.0: 60,
     80.0: 55, 100.0: 50, 125.0: 45, 160.0: 40, 200.0: 35, 250.0: 30, 320.0: 25, 400.0: 20,
-    500.0: 15, 630.0: 10, 800.0: 5, 2000.0: 0, 20000.0: 0, 200000.0: 0, 2000000.0: 0,
+    500.0: 15, 630.0: 10, 800.0: 5, 2000.0: 2, 20000.0: 0, 200000.0: 0, 2000000.0: 0,
 }
-# 20/2000 (cuenta dedos) = 0 letras: desde ahí la escala ETDRS ya no tiene letras (decisión del equipo, 31-oct-2026; antes valía 2).
+# 20/2000 (cuenta dedos) = 2 letras, como en la tabla de equivalencias de Metodología (revisión del equipo experto, nov-2026).
 
 GRUPOS_EDAD_CORTES = [(50, "< 50"), (60, "50-59"), (70, "60-69"), (80, "70-79"), (90, "80-89")]
 GRUPO_EDAD_MAYOR = ">= 90"
