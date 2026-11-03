@@ -1229,7 +1229,7 @@ if VISTA == SECCIONES[6]:
 
     st.markdown("##### Equivalencia entre Snellen y letras ETDRS")
     st.caption("En la consulta la agudeza visual se registra en Snellen (20/x); el tablero la convierte a letras para poder sumar y restar. "
-               "Cada línea de la cartilla son 5 letras: por ejemplo, pasar de 20/160 a 20/100 es ganar 10 letras (2 líneas).")
+               "Por ejemplo, pasar de 20/160 a 20/100 es ganar 10 letras.")
     eq = pd.DataFrame(L.EQUIV_SNELLEN, columns=L.COLUMNAS_SNELLEN)
     s1, s2 = st.columns([1, 1])
     with s1:
@@ -1237,7 +1237,7 @@ if VISTA == SECCIONES[6]:
                                    line=dict(color=CAT[0], width=3), marker=dict(size=8), cliponaxis=False, showlegend=False))
         fig.add_annotation(x="20/100", y=50, ax="20/160", ay=40, xref="x", yref="y", axref="x", ayref="y", showarrow=True, arrowhead=2, arrowcolor=SEL,
                            text="", standoff=4, startstandoff=4)
-        fig.add_annotation(x="20/320", y=64, text="20/160 → 20/100: +10 letras = 2 líneas", showarrow=False, font=dict(size=11, color=SEL))
+        fig.add_annotation(x="20/320", y=64, text="20/160 → 20/100: +10 letras", showarrow=False, font=dict(size=11, color=SEL))
         base_layout(fig, "Snellen (de mejor a peor visión) → letras", 380, xaxis=dict(title="Snellen (pies)"), yaxis=dict(title="Letras ETDRS", range=[-4, 108]))
         ejex_categorico(fig, list(eq["Snellen (pies)"]))
         st.plotly_chart(fig, use_container_width=True, key="met-snellen")
@@ -1245,7 +1245,7 @@ if VISTA == SECCIONES[6]:
         st.dataframe(eq, hide_index=True, height=380, column_config={"logMAR": st.column_config.NumberColumn(format="%.1f")})
     st.caption("De 20/10 a 20/4000. CD = cuenta dedos (≈ 20/2000) y MM = movimiento de manos (≈ 20/4000): desde ahí la escala ya no tiene letras (0). "
                "La percepción de luz y la no percepción de luz también equivalen a 0 letras.")
-    st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora. 10 letras equivalen aproximadamente a 2 líneas de la cartilla.")
+    st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora.")
 
     st.markdown("##### Hoja de parámetros")
     pt = pd.DataFrame(parametros.tabla()).drop(columns="clave")
