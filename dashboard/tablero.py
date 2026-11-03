@@ -1,4 +1,4 @@
-"""Página «Tablero»: los 7 niveles de gestión (visión ejecutiva … metodología).
+"""Página «Tablero»: los 6 niveles de gestión (visión ejecutiva … valor) y la metodología.
 
 Sigue la "Propuesta tablero por niveles de gestión" (17-09-2026) y la figura "De los datos a la
 gestión del valor". La abre el enrutador `dashboard/app.py` (st.navigation), que ya configuró la página,
@@ -548,6 +548,96 @@ def costo_por_diagnostico(d: pd.DataFrame, minimo=3) -> None:
             ejex_categorico(fig, list(cc.values()))
             with col_:
                 st.plotly_chart(fig, use_container_width=True, key=f"costo-dx-{dx}")
+
+
+def _tarjeta_html(color: str, claro: str, titulo: str, subtitulo: str, permite: str) -> str:
+    return (f'<div style="background:{color};color:#fff;border-radius:11px 11px 0 0;padding:12px 10px;text-align:center">'
+            f'<div style="font-size:1.3rem;font-weight:700">{titulo}</div><div style="font-size:1.02rem">({subtitulo})</div></div>'
+            f'<div style="background:{claro};border-radius:10px;padding:10px 14px;margin:10px 12px 0 12px;text-align:center">'
+            f'<div style="font-weight:700">¿Qué nos permite ver?</div><div>{permite}</div></div>')
+
+
+def _interpretacion_html(color: str, claro: str, lineas: list, pregunta: str) -> str:
+    items = "".join(f"<li>{x}</li>" for x in lineas)
+    return (f'<div style="background:{claro};border-radius:10px;padding:10px 16px;margin:0 12px;min-height:215px">'
+            f'<div style="font-weight:700;text-align:center">¿Cómo se interpreta?</div>'
+            f'<ul style="margin:4px 0 0 0;padding-left:20px">{items}</ul></div>'
+            f'<div style="background:{color};color:#fff;border-radius:10px;padding:10px 14px;margin:10px 12px 12px 12px;display:flex;gap:12px;align-items:center">'
+            f'<span style="flex:none;width:30px;height:30px;border-radius:50%;background:#fff;color:{color};display:flex;align-items:center;'
+            f'justify-content:center;font-weight:800">✓</span><div><b>Pregunta clave:</b><br>{pregunta}</div></div>')
+
+
+def _ejes_muestra(fig, alto: int = 290) -> None:
+    fig.update_layout(height=alto, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#fff", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
+    fig.update_yaxes(title="Agudeza visual (letras)", range=[0, 82], dtick=20, gridcolor="#EEF0F3")
+
+
+def graficos_exploratorios() -> None:
+    """Guía de lectura de los tres gráficos del análisis exploratorio (propuesta del equipo experto, nov-2026),
+    con gráficos dibujados aquí mismo sobre datos de MUESTRA (logic.EJEMPLO_TRAYECTORIAS / ejemplo_distribuciones)."""
+    azul, verde, morado = ("#1F4E8C", "#DCE8F7"), ("#2E7D32", "#E3F1DF"), ("#6A3D9A", "#EBE1F3")
+    st.markdown("<style>" + "".join(f".st-key-gexp-{k} {{border:2px solid {c};border-radius:14px;background:#fff;gap:10px;padding-bottom:4px}}"
+                                    for k, c in (("esp", azul[0]), ("caja", verde[0]), ("violin", morado[0])))
+                + ".st-key-gexp-resumen {border:2px solid #C9D6EA;border-radius:14px;background:#F4F7FC;padding:14px 18px}</style>",
+                unsafe_allow_html=True)
+    st.markdown('<div style="background:#14213D;color:#F4F2EC;border-radius:14px;padding:12px 18px;text-align:center;font-size:1.45rem;font-weight:700">'
+                'Tres gráficos, una misma meta: entender mejor nuestros resultados</div>', unsafe_allow_html=True)
+    st.caption("Gráficos utilizados en el análisis exploratorio del tablero. Los valores son de muestra: no corresponden a ningún paciente ni a ninguna corrida.")
+    muestra = L.ejemplo_distribuciones()
+    grupos = list(muestra)
+    c1, c2, c3 = st.columns(3)
+    with c1, st.container(key="gexp-esp"):
+        st.markdown(_tarjeta_html(*azul, "1. Gráfico de espaguetis", "trayectorias individuales",
+                                  "Cómo evoluciona cada paciente a lo largo del tiempo."), unsafe_allow_html=True)
+        fig = go.Figure()
+        for i_, tray in enumerate(L.EJEMPLO_TRAYECTORIAS):
+            fig.add_trace(go.Scatter(x=["Línea base", "6 meses", "12 meses"], y=tray, mode="lines+markers",
+                                     line=dict(color=CAT[i_ % len(CAT)], width=2), marker=dict(size=7), hoverinfo="skip"))
+        _ejes_muestra(fig)
+        st.plotly_chart(fig, use_container_width=True, key="gexp-fig-esp", config={"displayModeBar": False})
+        st.markdown(_interpretacion_html(*azul, ["Cada línea es un paciente.", "La dirección muestra si mejora, empeora o se mantiene estable.",
+                                                 "La separación entre líneas refleja diferencias entre pacientes."],
+                                         "¿Todos los pacientes evolucionan igual?"), unsafe_allow_html=True)
+    with c2, st.container(key="gexp-caja"):
+        st.markdown(_tarjeta_html(*verde, "2. Gráfico de cajas y bigotes", "resumen del grupo",
+                                  "El resultado típico del grupo y qué tan variable es."), unsafe_allow_html=True)
+        fig = go.Figure()
+        for g_, col_ in zip(grupos, ("#4A86D9", "#A5D88F")):
+            fig.add_trace(go.Box(y=muestra[g_], name=g_.replace(" (", "<br>("), boxpoints="outliers", fillcolor=col_, hoverinfo="skip",
+                                 line=dict(color="#14213D", width=2), marker=dict(color="#14213D", size=6)))
+        _ejes_muestra(fig)
+        st.plotly_chart(fig, use_container_width=True, key="gexp-fig-caja", config={"displayModeBar": False})
+        st.markdown(_interpretacion_html(*verde, ["Línea central: mediana (valor típico).", "Caja: 50 % central de los pacientes (entre el percentil 25 y el 75).",
+                                                  "Bigotes: rango habitual.", "Puntos: valores extremos."],
+                                         "¿Cuál es el resultado típico y qué tanta variabilidad hay?"), unsafe_allow_html=True)
+    with c3, st.container(key="gexp-violin"):
+        st.markdown(_tarjeta_html(*morado, "3. Gráfico de violín", "forma de la distribución",
+                                  "Cómo se distribuyen los resultados y dónde se concentran."), unsafe_allow_html=True)
+        fig = go.Figure()
+        for g_, col_ in zip(grupos, ("#4A86D9", "#A07CC5")):
+            nombre_ = g_.replace(" (", "<br>(")
+            fig.add_trace(go.Violin(y=muestra[g_], name=nombre_, fillcolor=col_, line=dict(color="#2A2F45", width=1.5), opacity=.85,
+                                    points=False, box_visible=False, meanline_visible=False, hoverinfo="skip", spanmode="hard"))
+            fig.add_trace(go.Scatter(x=[nombre_], y=[float(np.median(muestra[g_]))], mode="markers", hoverinfo="skip",
+                                     marker=dict(size=13, color="#fff", line=dict(color="#14213D", width=2.5))))
+        _ejes_muestra(fig)
+        st.plotly_chart(fig, use_container_width=True, key="gexp-fig-violin", config={"displayModeBar": False})
+        st.markdown(_interpretacion_html(*morado, ["Partes anchas: muchos pacientes con valores similares.", "Partes estrechas: pocos pacientes.",
+                                                   "Permite ver si hay uno o varios grupos de resultados."],
+                                         "¿Dónde se concentran los pacientes?"), unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;margin-top:6px"><span style="background:#14213D;color:#F4F2EC;border-radius:12px;'
+                'padding:6px 26px;font-size:1.3rem;font-weight:700">En resumen</span></div>', unsafe_allow_html=True)
+    with st.container(key="gexp-resumen"):
+        r1, r2, r3, r4 = st.columns([1, 1, 1, 1.05], vertical_alignment="center")
+        r1.markdown(":blue[:material/groups:] **:blue[Espaguetis:]**  \nSeguimos la historia individual de cada paciente.")
+        r2.markdown(":green[:material/bar_chart:] **:green[Cajas y bigotes:]**  \nConocemos el comportamiento general del grupo.")
+        r3.markdown(":violet[:material/area_chart:] **:violet[Violín:]**  \nDescubrimos cómo se distribuyen los resultados.")
+        r4.markdown('<div style="background:#14213D;color:#F4F2EC;border-radius:12px;padding:12px 16px;font-weight:600">'
+                    '→ Así pasamos de un promedio a una visión completa de nuestros pacientes.</div>', unsafe_allow_html=True)
+    st.markdown('<p style="border-left:4px solid #8A94A3;padding:6px 14px;color:#4A5568;font-style:italic;margin-top:10px">'
+                'Ninguno de estos gráficos, por sí solo, demuestra que un tratamiento sea más efectivo que otro. Son herramientas de '
+                'análisis exploratorio que ayudan a identificar patrones, diferencias y preguntas que posteriormente deben evaluarse '
+                'con análisis estadísticos apropiados.</p>', unsafe_allow_html=True)
 
 
 # ============================================================================ pestañas
@@ -1103,6 +1193,8 @@ if VISTA == SECCIONES[4]:
 if VISTA == SECCIONES[6]:
     st.markdown('<div class="nivel" style="--c:#5B6675"><h3>7. Explicación metodológica</h3>'
                 '<p>Cómo se calcula cada indicador, con qué ventanas y contra qué meta.</p></div>', unsafe_allow_html=True)
+    st.markdown("##### Gráficos utilizados en el análisis exploratorio")
+    graficos_exploratorios()
     st.markdown("##### Cómo se lee el cambio de agudeza visual")
     st.caption("Ejemplo con datos sintéticos: tres ojos inventados que no corresponden a ningún paciente ni a ninguna corrida. La agudeza visual se expresa en "
                "**letras** (escala ETDRS, de 0 a 85), no en fracciones de Snellen. El cambio es: letras de la visita − letras de la línea base (LB).")

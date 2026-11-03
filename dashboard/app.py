@@ -1,7 +1,7 @@
 """Valor en Salud (retina) — punto de entrada de la aplicación.
 
 Enruta las páginas con st.navigation:
-  - Tablero                      -> dashboard/tablero.py  (los 7 niveles de gestión)
+  - Tablero                      -> dashboard/tablero.py  (los 6 niveles de gestión y la metodología)
   - Pipeline de datos            -> dashboard/paginas/pipeline.py  (ejecuta el pipeline con su log y muestra el historial)
   - Completitud de datos         -> dashboard/paginas/completitud.py  (formulario y resultados del proceso)
 En todas se muestran la última actualización de datos y el pie de página.

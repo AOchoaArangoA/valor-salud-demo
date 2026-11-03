@@ -300,6 +300,19 @@ EQUIV_SNELLEN = [
     ("MM", 0, "20/4000", "6/1200", 2.3),
 ]
 COLUMNAS_SNELLEN = ["Snellen decimal", "Letras ETDRS", "Snellen (pies)", "Snellen (metros)", "logMAR"]
+
+# Datos de MUESTRA para la guía «Gráficos utilizados en el análisis exploratorio» (metodología): valores fijos e inventados,
+# no salen de ninguna corrida ni de ningún paciente. Espaguetis: AV en letras en línea base, 6 y 12 meses.
+EJEMPLO_TRAYECTORIAS = [(64, 75, 76), (56, 70, 71), (50, 63, 72), (43, 64, 68), (40, 44, 67), (36, 49, 55), (43, 47, 37),
+                        (36, 40, 42), (29, 40, 26), (24, 32, 24), (20, 23, 20), (14, 16, 22), (16, 54, 54)]
+
+
+def ejemplo_distribuciones() -> Dict[str, np.ndarray]:
+    """AV en letras de dos grupos de MUESTRA (semilla fija: siempre los mismos valores) para cajas y bigotes y violín."""
+    rng = np.random.default_rng(31)
+    dmre = np.clip(rng.normal(49, 11, 80), 16, 76)
+    emd = np.concatenate([np.clip(rng.normal(43, 11, 70), 16, 70), [8, 5]])   # dos valores extremos bajos
+    return {"DMRE (neovascular)": dmre.round(), "EMD (diabético)": emd.round()}
 CRITERIOS_ESPAGUETI = ["Aleatoria (reproducible)", "Mayor mejora (Δ AV final)", "Mayor caída (Δ AV final)",
                        "Más seguimiento (con S104)"]
 
