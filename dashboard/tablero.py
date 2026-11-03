@@ -1243,7 +1243,7 @@ if VISTA == SECCIONES[6]:
         st.plotly_chart(fig, use_container_width=True, key="met-snellen")
     with s2:
         st.dataframe(eq, hide_index=True, height=380, column_config={"logMAR": st.column_config.NumberColumn(format="%.1f")})
-    st.caption("De 20/10 a 20/4000. CD = cuenta dedos (≈ 20/2000) y MM = movimiento de manos (≈ 20/4000): desde ahí la escala ya no tiene letras (0). "
+    st.caption("De 20/10 a 20/4000. CD = cuenta dedos (≈ 20/2000, 2 letras) y MM = movimiento de manos (≈ 20/4000, 0 letras). "
                "La percepción de luz y la no percepción de luz también equivalen a 0 letras.")
     st.caption("Regla de todo el tablero: Δ > +5 letras = mejora; entre −5 y +5 = se mantiene; < −5 = empeora.")
 

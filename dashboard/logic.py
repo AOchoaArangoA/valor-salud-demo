@@ -288,7 +288,7 @@ UMBRAL_MEJORA_LETRAS = 5
 EJEMPLO_AV = [("Ojo A", [45, 55, 60, 62]), ("Ojo B", [55, 57, 53, 56]), ("Ojo C", [60, 52, 48, 45])]
 # Equivalencia de agudeza visual de 20/10 a 20/4000, tal como la entregó el equipo experto (revisión del 31-oct-2026):
 # (Snellen decimal, letras ETDRS, Snellen en pies, Snellen en metros, logMAR). CD = cuenta dedos, MM = movimiento de manos.
-# Desde 20/2000 (cuenta dedos) la escala ETDRS ya no tiene letras: 0 (decisión del equipo, 31-oct-2026).
+# 20/2000 (cuenta dedos) = 2 letras y 20/4000 (movimiento de manos) = 0 letras (revisión del equipo experto, nov-2026).
 EQUIV_SNELLEN = [
     ("2.00", 100, "20/10", "6/3", -0.3), ("1.60", 95, "20/12.5", "6/4", -0.2), ("1.25", 90, "20/16", "6/5", -0.1),
     ("1.00", 85, "20/20", "6/6", 0.0), ("0.80", 80, "20/25", "6/7.5", 0.1), ("0.63", 75, "20/32", "6/9", 0.2),
@@ -296,7 +296,7 @@ EQUIV_SNELLEN = [
     ("0.25", 55, "20/80", "6/24", 0.6), ("0.20", 50, "20/100", "6/30", 0.7), ("0.16", 45, "20/125", "6/38", 0.8),
     ("0.125", 40, "20/160", "6/48", 0.9), ("0.10", 35, "20/200", "6/60", 1.0), ("0.08", 30, "20/250", "6/75", 1.1),
     ("0.06", 25, "20/320", "6/96", 1.2), ("0.05", 20, "20/400", "6/120", 1.3), ("0.04", 15, "20/500", "6/150", 1.4),
-    ("0.03", 10, "20/630", "6/190", 1.5), ("0.025", 5, "20/800", "6/240", 1.6), ("0.01 (CD)", 0, "20/2000", "6/600", 1.9),
+    ("0.03", 10, "20/630", "6/190", 1.5), ("0.025", 5, "20/800", "6/240", 1.6), ("0.01 (CD)", 2, "20/2000", "6/600", 1.9),
     ("MM", 0, "20/4000", "6/1200", 2.3),
 ]
 COLUMNAS_SNELLEN = ["Snellen decimal", "Letras ETDRS", "Snellen (pies)", "Snellen (metros)", "logMAR"]
