@@ -616,14 +616,14 @@ def graficos_exploratorios() -> None:
         fig = go.Figure()
         for g_, col_ in zip(grupos, ("#4A86D9", "#A07CC5")):
             nombre_ = g_.replace(" (", "<br>(")
+            # Violín con su caja y bigotes adentro: la caja marca la mediana y el 50 % central; los bigotes, el rango habitual
             fig.add_trace(go.Violin(y=muestra[g_], name=nombre_, fillcolor=col_, line=dict(color="#2A2F45", width=1.5), opacity=.85,
-                                    points=False, box_visible=False, meanline_visible=False, hoverinfo="skip", spanmode="hard"))
-            fig.add_trace(go.Scatter(x=[nombre_], y=[float(np.median(muestra[g_]))], mode="markers", hoverinfo="skip",
-                                     marker=dict(size=13, color="#fff", line=dict(color="#14213D", width=2.5))))
+                                    points=False, meanline_visible=False, hoverinfo="skip", spanmode="hard",
+                                    box=dict(visible=True, width=.28, fillcolor="#FFFFFF", line=dict(color="#14213D", width=2))))
         _ejes_muestra(fig)
         st.plotly_chart(fig, use_container_width=True, key="gexp-fig-violin", config={"displayModeBar": False})
         st.markdown(_interpretacion_html(*morado, ["Partes anchas: muchos pacientes con valores similares.", "Partes estrechas: pocos pacientes.",
-                                                   "Permite ver si hay uno o varios grupos de resultados."],
+                                                   "El violín muestra la forma de la distribución e incluye un gráfico de cajas y bigotes."],
                                          "¿Dónde se concentran los pacientes?"), unsafe_allow_html=True)
     st.markdown('<div style="text-align:center;margin-top:6px"><span style="background:#14213D;color:#F4F2EC;border-radius:12px;'
                 'padding:6px 26px;font-size:1.3rem;font-weight:700">En resumen</span></div>', unsafe_allow_html=True)
