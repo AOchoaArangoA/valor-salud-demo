@@ -72,8 +72,6 @@ def cargar(directorio: Path, llave: Optional[bytes] = None) -> Tuple[pd.DataFram
 COLS_APL = ["pacienteojoreingreso", "con_dosis", "Oportunidad_aplicacion_dias", "Clasificacion_cumplimiento",
             "Semanas_Apl_a_Prog", "Semanas_Entre_Dosis"]
 COLS_APL_ANIO = ["dias_desde_primera", "Oportunidad_aplicacion_cat"]   # opcionales: cumplimiento por año de tratamiento
-# Verde = dentro de la ventana de tolerancia (2, 3, 4); amarillo = fuera de la ventana pero no grave (1, 5); rojo = retraso grave (6).
-COLOR_CLASE = {"1": "#F2C230", "2": "#8BC34A", "3": "#2E7D32", "4": "#66BB6A", "5": "#E8A900", "6": "#C0392B"}
 
 
 def cargar_aplicaciones(directorio: Path, llave: Optional[bytes] = None) -> Optional[pd.DataFrame]:
@@ -84,15 +82,6 @@ def cargar_aplicaciones(directorio: Path, llave: Optional[bytes] = None) -> Opti
     except (OSError, ValueError):
         return None
     return d[COLS_APL + [c for c in COLS_APL_ANIO if c in d.columns]] if all(c in d.columns for c in COLS_APL) else None
-
-
-def resumen_programacion(apl: pd.DataFrame, tol: int) -> Dict[str, float]:
-    """Mismos indicadores del reporte de aplicaciones: n con dato, % dentro de ±tol días, desvío promedio, % retraso grave."""
-    d = apl["Oportunidad_aplicacion_dias"].dropna()
-    if d.empty:
-        return {"n": 0}
-    return {"n": int(len(d)), "dentro": float((d.abs() <= tol).mean() * 100), "promedio": float(d.mean()),
-            "mediana": float(d.median()), "grave": float(apl["Clasificacion_cumplimiento"].str.startswith("6").sum() / len(d) * 100)}
 
 
 def cumplimiento_anios(apl: Optional[pd.DataFrame], ids) -> Dict[int, Tuple[float, int]]:

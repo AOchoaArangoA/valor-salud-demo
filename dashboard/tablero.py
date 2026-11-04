@@ -903,46 +903,6 @@ if VISTA == SECCIONES[2]:
         if not len(prog):
             st.caption("El intervalo programado no es evaluable: el insumo no trae `fecha_programacion`.")
 
-    # ---- cumplimiento en detalle (mismo universo que las tarjetas: paciente-ojo reingreso con 2 años de seguimiento, aplicaciones de los años 1 y 2)
-    st.markdown(f"##### {L.N_CUMPL} en detalle")
-    st.caption("Cumplimiento = fecha real de la dosis frente a la fecha programada en la dosis anterior. Mismo universo que las tarjetas: "
-               "paciente-ojo reingreso con 2 años de seguimiento posible y aplicaciones de los años 1 y 2.")
-    if apl_todas is None:
-        st.info("Esta corrida es anterior al detalle de programación y extensión: vuelva a ejecutar el pipeline de esta entrega (página Pipeline de datos) para verlo.")
-    else:
-        apl = apl_todas[apl_todas["pacienteojoreingreso"].isin(IDS_2ANIOS)]
-        if "dias_desde_primera" in apl.columns:
-            apl = apl[apl["dias_desde_primera"].between(0, 728)]
-        rp = L.resumen_programacion(apl, TOL_PROG)
-        g1, g2 = st.columns(2)
-        with g1:
-            st.markdown(f"**{L.N_CUMPL}: fecha programada** (ventana ±{TOL_PROG} días)")
-            if rp["n"] == 0:
-                st.markdown(f'<span class="nd">{NO_EVAL}</span>', unsafe_allow_html=True)
-            else:
-                a, b, c = st.columns(3)
-                a.metric(f"Dentro de ±{TOL_PROG} d", L.f_pct(rp["dentro"]), help=f"n = {rp['n']:,} aplicaciones con fecha programada previa")
-                b.metric("Desvío promedio", f"{L.f_num(rp['promedio'])} d", help=f"Mediana {L.f_num(rp['mediana'])} d. Positivo = retraso.")
-                c.metric("Retraso grave", L.f_pct(rp["grave"]), help=f"Más de {config.RETRASO_GRAVE_DIAS} días después de lo programado.")
-                cl = apl[apl["Clasificacion_cumplimiento"] != "Sin dato"].groupby("Clasificacion_cumplimiento").size().sort_index()
-                fig = go.Figure(go.Bar(y=cl.index[::-1], x=cl.values[::-1], orientation="h",
-                                       marker_color=[L.COLOR_CLASE[k[0]] for k in cl.index[::-1]],
-                                       text=[f"{v:,} ({v / cl.sum() * 100:.0f} %)" for v in cl.values[::-1]], textposition="outside", cliponaxis=False))
-                base_layout(fig, f"{L.N_CUMPL}: clasificación (verde: dentro de la ventana · amarillo: fuera, no grave · rojo: retraso grave)", 300, xaxis=dict(range=[0, cl.max() * 1.35], title="aplicaciones"))
-                st.plotly_chart(fig, use_container_width=True, key="prog-clases")
-        with g2:
-            if rp["n"] == 0:
-                st.markdown(f"**{L.N_CUMPL}: distribución de días**")
-                st.markdown(f'<span class="nd">{NO_EVAL}</span>', unsafe_allow_html=True)
-            else:
-                dias = apl["Oportunidad_aplicacion_dias"].dropna().clip(-30, 60)
-                fig = go.Figure(go.Histogram(x=dias, xbins=dict(start=-30, end=61, size=2), marker_color=CAT[0]))
-                fig.add_vrect(x0=-TOL_PROG, x1=TOL_PROG, fillcolor=VERDE, opacity=.12, line_width=0,
-                              annotation_text=f"±{TOL_PROG} d", annotation_position="top left")
-                base_layout(fig, "Días de desvío vs. fecha programada (recortado −30…60)", 300,
-                            xaxis=dict(title="días (negativo = adelantado, positivo = retraso)"), yaxis=dict(title="aplicaciones"))
-                st.plotly_chart(fig, use_container_width=True, key="prog-dias")
-
 # ---------------------------------------------------------------- 4. Paciente-ojo
 if VISTA == SECCIONES[3]:
     encabezado(4, "Paciente-ojo", "Selección de paciente-ojo reingreso para gestión individual")
