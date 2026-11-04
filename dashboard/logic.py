@@ -110,25 +110,6 @@ def cumplimiento_anios(apl: Optional[pd.DataFrame], ids) -> Dict[int, Tuple[floa
     return out
 
 
-def intervalos_entre_dosis(apl: pd.DataFrame) -> pd.DataFrame:
-    """Una fila por consecutivo de dosis (2 … 9+): n, mediana, media y cuartiles del intervalo REAL (semanas desde la dosis anterior) y
-    mediana del intervalo PROGRAMADO."""
-    e = apl[apl["con_dosis"] >= 2].copy()
-    e["dosis"] = e["con_dosis"].clip(upper=9).astype(int)
-    filas = []
-    for k, g in e.groupby("dosis"):
-        r = g["Semanas_Entre_Dosis"].dropna()
-        r = r[r >= 0]
-        p = g["Semanas_Apl_a_Prog"].dropna()
-        p = p[p >= 0]
-        if r.empty:
-            continue
-        filas.append({"Dosis": f"{k}+" if k == 9 else str(k), "n": int(len(r)), "Mediana real (sem)": float(r.median()), "Media real (sem)": float(r.mean()),
-                      "Q1": float(r.quantile(.25)), "Q3": float(r.quantile(.75)),
-                      "Mediana programada (sem)": float(p.median()) if len(p) else np.nan})
-    return pd.DataFrame(filas)
-
-
 COLS_ANUALES = ["apl_anio1", "apl_anio2", "cumplimiento_anio1", "cumplimiento_anio2", "n_moleculas_anio1", "n_moleculas_anio2",
                 "costofin_anio1", "costofin_anio2", "med_N_anio1", "med_N_anio2", "Cons_Retina_NAnio1", "Cons_Retina_NAnio2",
                 "Cons_Oftalmo_NAnio1", "Cons_Oftalmo_NAnio2", "TipoAyuda_OCT_NAnio1", "TipoAyuda_OCT_NAnio2",

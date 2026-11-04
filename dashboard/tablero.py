@@ -900,11 +900,6 @@ if VISTA == SECCIONES[2]:
         m1.metric("Intervalo real entre dosis (mediana)", f"{L.f_num(real.median(), 0)} sem" if len(real) else "—", help=f"n = {len(real):,}")
         m2.metric("Intervalo programado (mediana)", f"{L.f_num(prog.median(), 0)} sem" if len(prog) else "N/E",
                   help=(f"Semanas entre la aplicación y su fecha programada siguiente (n = {len(prog):,})" if len(prog) else NO_EVAL))
-        ti = L.intervalos_entre_dosis(apl_todas)
-        if not ti.empty:
-            st.markdown("**Tabla entre dosis (semanas)**")
-            st.dataframe(ti.round(1), hide_index=True)
-            st.caption("Cada fila resume el intervalo entre esa dosis y la anterior. Q1 y Q3 delimitan la mitad central de los casos.")
         if not len(prog):
             st.caption("El intervalo programado no es evaluable: el insumo no trae `fecha_programacion`.")
 
