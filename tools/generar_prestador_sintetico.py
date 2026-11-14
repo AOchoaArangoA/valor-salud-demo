@@ -105,6 +105,30 @@ def _ajustar_estructura(hojas: Dict[str, pd.DataFrame], rng: np.random.Generator
     return hojas
 
 
+# Tratamiento previo (columnas tp_* de la línea de base): medicamento -> (prefijo, probabilidad de haberlo recibido).
+# ~30 % de los paciente-ojo nuevos y ~85 % de los reingresos traen algún tratamiento antes de entrar al programa.
+TRATAMIENTO_PREVIO = {"afli": .45, "rani": .25, "beva": .35, "brolu": .06, "fari": .05, "dexa": .08}
+
+
+def _tratamiento_previo(lb: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
+    """Llena tp_<med>, tp_<med>fecini, tp_<med>fecult, tp_<med>mestto y tp_<med>dosis (14-nov-2026). Usa su propio flujo
+    aleatorio (semilla + 6): no cambia ningún otro dato del prestador sintético."""
+    lb = lb.copy()
+    dx = pd.to_datetime(lb["dx_fecha"])
+    con_previo = np.where(lb["reingreso"].fillna(0).astype(int) > 0, rng.random(len(lb)) < .85, rng.random(len(lb)) < .30)
+    for med, p in TRATAMIENTO_PREVIO.items():
+        recibio = con_previo & (rng.random(len(lb)) < p)
+        meses = rng.integers(2, 25, len(lb))
+        fin = dx - pd.to_timedelta(rng.integers(20, 200, len(lb)), unit="D")
+        ini = fin - pd.to_timedelta(meses * 30, unit="D")
+        lb[f"tp_{med}"] = np.where(recibio, 1, 0)
+        lb[f"tp_{med}fecini"] = ini.where(recibio)
+        lb[f"tp_{med}fecult"] = fin.where(recibio)
+        lb[f"tp_{med}mestto"] = pd.Series(meses, index=lb.index).where(recibio)
+        lb[f"tp_{med}dosis"] = pd.Series(np.maximum(1, (meses / 1.6).round()).astype(int), index=lb.index).where(recibio)
+    return lb
+
+
 def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     rng_rein = np.random.default_rng(seed + 3)    # flujo aparte para los reingresos
@@ -340,7 +364,9 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
     hojas = {"pacientes": pd.DataFrame(pac), "lineabase": pd.DataFrame(lb), "aplicaciones": pd.DataFrame(ap), "consultas": pd.DataFrame(co),
              "ayudas": pd.DataFrame(ay), "calidadvida": pd.DataFrame(cv), "maestra_costos": maestra.reset_index(drop=True)}
     hojas["_ecv"] = pd.DataFrame(ecv)
-    return _ajustar_estructura(hojas, np.random.default_rng(seed + 2))
+    hojas = _ajustar_estructura(hojas, np.random.default_rng(seed + 2))
+    hojas["lineabase"] = _tratamiento_previo(hojas["lineabase"], np.random.default_rng(seed + 6))
+    return hojas
 
 
 def a_bytes(hojas: Dict[str, pd.DataFrame]) -> Tuple[bytes, bytes]:

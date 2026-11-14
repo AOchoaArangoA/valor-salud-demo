@@ -1,13 +1,17 @@
-"""Piezas compartidas por todas las páginas: estilos, «última actualización», fechas y pie de página."""
+"""Piezas compartidas por todas las páginas: estilos, «última actualización», fechas, pie de página, la elección de la
+corrida de datos, los filtros comunes (diagnóstico, medicamento, sede, EAPB) y el formato base de los gráficos."""
 from __future__ import annotations
 
+import textwrap
 from datetime import datetime
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
+import pandas as pd
 import streamlit as st
 
 import logic as L
-from pipeline import registro
+from pipeline import registro, seguridad
 
 # El enrutador (app.py) deja aquí las páginas para que una página pueda llevar a otra con st.switch_page
 PAGINAS: Dict[str, "st.Page"] = {}
@@ -71,3 +75,127 @@ def aviso_actualizacion() -> None:
 def pie() -> None:
     st.markdown('<div style="margin-top:2.5rem;padding-top:.8rem;border-top:1px solid #DDE2E8;text-align:center;color:#5B6675;font-size:.85rem">'
                 'Proyecto Valor en Salud</div>', unsafe_allow_html=True)
+
+
+# ============================================================================ paleta y formato de gráficos
+CAT = ["#1F5FBF", "#D26E00", "#0A8FA3", "#7A4FB0", "#4C9A2A", "#8A5A44", "#C2185B"]   # paleta categórica validada
+GRIS = "#8A94A3"
+
+
+def rgba(hexc: str, a: float) -> str:
+    h = hexc.lstrip("#")
+    return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{a})"
+
+
+def base_layout(fig, titulo: str, alto: int, **kw) -> None:
+    """Título envuelto en varias líneas (no se corta en columnas angostas) y leyenda horizontal SIEMPRE visible
+    justo debajo del título, con el margen superior calculado para ambos. Los ejes reservan espacio solos (automargin)."""
+    kw.pop("legend", None)                     # la posición de la leyenda es única para todas las gráficas
+    forzar = kw.pop("showlegend", None) is True
+    lineas = textwrap.wrap(titulo, 44) or [titulo]
+    t_titulo = 22 * len(lineas) + 16
+    nombres = [str(t.name) for t in fig.data if t.name and t.showlegend is not False]
+    con_leyenda = len(nombres) > 1 or (forzar and len(nombres) >= 1)
+    filas = max(1, -(-int(sum(len(n) + 7 for n in nombres) * 6.6) // 340)) if con_leyenda else 0
+    t_leyenda = filas * 19 + (6 if filas else 0)
+    total = alto + t_leyenda + (t_titulo - 28)
+    fig.update_layout(
+        height=total,
+        title=dict(text="<br>".join(lineas), font_size=14, x=0, xanchor="left", y=1, yanchor="top", yref="container", pad=dict(t=14)),
+        margin=dict(l=10, r=14, t=t_titulo + t_leyenda + 12, b=10), plot_bgcolor="#fff", paper_bgcolor="rgba(0,0,0,0)",
+        showlegend=bool(filas),
+        legend=dict(orientation="h", yref="container", yanchor="top", y=1 - (t_titulo + 2) / total, x=0, xanchor="left",
+                    font=dict(size=11), tracegroupgap=2),
+        uniformtext=dict(minsize=9, mode="show"), **kw)
+    fig.update_xaxes(automargin=True)
+    fig.update_yaxes(gridcolor="#EEF0F3", automargin=True)
+
+
+# ============================================================================ corrida de datos
+@st.cache_data(show_spinner="Cargando datos…")
+def _datos(ruta: str, marca: float, llave: bytes | None = None):
+    """`marca` = fecha de modificación de los resultados: si se vuelve a correr el proceso, la caché se renueva sola."""
+    return L.cargar(Path(ruta), llave)
+
+
+def pantalla_clave() -> None:
+    """Datos protegidos: se pide la clave una vez por sesión; la llave derivada queda solo en memoria."""
+    st.title("Datos protegidos")
+    st.markdown("Esta corrida está **cifrada**. Escriba la clave para abrirla; los datos se descifran solo en memoria.")
+    with st.form("clave"):
+        clave = st.text_input("Clave", type="password")
+        enviar = st.form_submit_button("Desbloquear")
+    if enviar:
+        llave = seguridad.llave_desde_clave(clave)
+        if llave is None:
+            st.error("Clave incorrecta.")
+        else:
+            st.session_state["llave_datos"] = llave
+            st.rerun()
+
+
+def elegir_corrida() -> Tuple[Dict, pd.DataFrame, Dict, Optional[bytes]]:
+    """Selector «Corrida de datos» de la barra lateral (el mismo en todas las páginas: la elección se recuerda) y carga
+    de la tabla del tablero. Devuelve (corrida, mart, metadata, llave); detiene la página si no hay datos o falta la clave."""
+    corridas = L.listar_corridas()
+    if not corridas:
+        st.title("Valor en Salud · Retina")
+        st.info("Todavía no hay datos procesados. Vaya a **Pipeline de datos** (barra lateral) y suba el libro del formulario.")
+        st.stop()
+    cifradas = {str(c["ruta"]) for c in corridas if seguridad.carpeta_cifrada(c["ruta"])}
+    etiquetas = [(c["etiqueta"] + (" 🔒" if str(c["ruta"]) in cifradas else "")) if [x["etiqueta"] for x in corridas].count(c["etiqueta"]) == 1
+                 else f'{c["etiqueta"]} ({i + 1})' for i, c in enumerate(corridas)]
+    pos = next((i for i, c in enumerate(corridas) if str(c["ruta"]) == st.session_state.get("corrida_ruta")), 0)
+    i = etiquetas.index(st.sidebar.selectbox("Corrida de datos", etiquetas, index=pos,
+                                             help="Cada carga queda guardada con su prestador y versión; elija cuál ver (por defecto, la más reciente)."))
+    corrida = corridas[i]
+    st.session_state["corrida_ruta"] = str(corrida["ruta"])
+    llave = st.session_state.get("llave_datos") or (seguridad.llave_de_entorno() if seguridad.hay_cifrado() else None)
+    if str(corrida["ruta"]) in cifradas and llave is None:
+        pantalla_clave()
+        st.stop()
+    try:
+        mart, meta = _datos(str(corrida["ruta"]), (corrida["ruta"] / "metadata.json").stat().st_mtime, llave)
+    except (FileNotFoundError, OSError, ValueError) as e:
+        st.error(f"No se pudo leer la corrida seleccionada: {e}")
+        st.stop()
+    return corrida, mart, meta, llave
+
+
+# ============================================================================ filtros comunes
+# Mismas claves en todas las páginas: lo que se elige en el Tablero sigue elegido en Análisis de adherencia y viceversa.
+FILTROS = ("f-dx", "f-med", "f-sede", "f-eapb")
+
+
+def conservar_filtros() -> None:
+    """Streamlit borra el valor de un widget cuando la página que se muestra no lo dibuja; reasignarlo en cada
+    ejecución (lo llama app.py antes de abrir la página) lo conserva al pasar de una página a otra."""
+    for k in FILTROS:
+        if k in st.session_state:
+            st.session_state[k] = st.session_state[k]
+
+
+def _multiselect(etiqueta: str, opciones: List[str], clave: str, por_defecto: List[str]) -> List[str]:
+    """Multiselect de la barra lateral cuyo valor guardado se limpia si la corrida nueva no trae alguna opción."""
+    if clave in st.session_state:
+        st.session_state[clave] = [o for o in st.session_state[clave] if o in opciones]
+        return st.sidebar.multiselect(etiqueta, opciones, key=clave)
+    return st.sidebar.multiselect(etiqueta, opciones, default=por_defecto, key=clave)
+
+
+def filtros_comunes(mart: pd.DataFrame) -> pd.Series:
+    """Diagnóstico, medicamento, sede y EAPB en la barra lateral. Devuelve la máscara de filas que cumplen."""
+    dx_all = mart["diagnostico"].value_counts().index.tolist()
+    dx_def = [d for d in ("DMREn", "EMD") if d in dx_all]
+    if len(dx_def) < 2:   # p. ej. un prestador escribe "DMREh": no esconder datos por defecto; se parte de todos los diagnósticos
+        dx_def = dx_all
+    mascara = mart["diagnostico"].isin(_multiselect("Diagnóstico", dx_all, "f-dx", dx_def))
+    med_all = sorted(mart["medicamento_label"].unique())
+    mascara &= mart["medicamento_label"].isin(_multiselect("Medicamento", med_all, "f-med", med_all))
+    # Sede y EAPB vienen de la hoja de pacientes; una corrida que no las trae no muestra el filtro
+    for col, nombre in (("sede", "Sede"), ("eapb", "EAPB")):
+        if col in mart and L.con_dato(mart[col]).any():
+            valores = mart[col].where(L.con_dato(mart[col]), "Sin dato").astype(str)
+            todas = sorted(valores.unique())
+            mascara &= valores.isin(_multiselect(nombre, todas, f"f-{col}", todas))
+    return mascara

@@ -1,5 +1,5 @@
 {
-  "generado": "2026-10-31T23:34:59",
+  "generado": "2026-11-14T15:20:34",
   "hojas": [
     {
       "hoja": "pacientes",
@@ -399,182 +399,182 @@
         {
           "columna": "tp_afli",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_aflifecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 272,
+          "pct": 18.1
         },
         {
           "columna": "tp_aflifecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 272,
+          "pct": 18.1
         },
         {
           "columna": "tp_aflimestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 272,
+          "pct": 18.1
         },
         {
           "columna": "tp_aflidosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 272,
+          "pct": 18.1
         },
         {
           "columna": "tp_rani",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_ranifecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 162,
+          "pct": 10.8
         },
         {
           "columna": "tp_ranifecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 162,
+          "pct": 10.8
         },
         {
           "columna": "tp_ranimestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 162,
+          "pct": 10.8
         },
         {
           "columna": "tp_ranidosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 162,
+          "pct": 10.8
         },
         {
           "columna": "tp_beva",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_bevafecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 218,
+          "pct": 14.5
         },
         {
           "columna": "tp_bevafecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 218,
+          "pct": 14.5
         },
         {
           "columna": "tp_bevamestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 218,
+          "pct": 14.5
         },
         {
           "columna": "tp_bevadosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 218,
+          "pct": 14.5
         },
         {
           "columna": "tp_brolu",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_brolufecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 34,
+          "pct": 2.3
         },
         {
           "columna": "tp_brolufecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 34,
+          "pct": 2.3
         },
         {
           "columna": "tp_brolumestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 34,
+          "pct": 2.3
         },
         {
           "columna": "tp_broludosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 34,
+          "pct": 2.3
         },
         {
           "columna": "tp_fari",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_farifecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 33,
+          "pct": 2.2
         },
         {
           "columna": "tp_farifecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 33,
+          "pct": 2.2
         },
         {
           "columna": "tp_farimestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 33,
+          "pct": 2.2
         },
         {
           "columna": "tp_faridosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 33,
+          "pct": 2.2
         },
         {
           "columna": "tp_dexa",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 1503,
+          "pct": 100.0
         },
         {
           "columna": "tp_dexafecini",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 59,
+          "pct": 3.9
         },
         {
           "columna": "tp_dexafecult",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 59,
+          "pct": 3.9
         },
         {
           "columna": "tp_dexamestto",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 59,
+          "pct": 3.9
         },
         {
           "columna": "tp_dexadosis",
           "obligatoria": false,
-          "con_dato": 0,
-          "pct": 0.0
+          "con_dato": 59,
+          "pct": 3.9
         },
         {
           "columna": "ota_fotoco",

@@ -2,6 +2,7 @@
 
 Enruta las páginas con st.navigation:
   - Tablero                      -> dashboard/tablero.py  (los 6 niveles de gestión y la metodología)
+  - Análisis de adherencia       -> dashboard/paginas/adherencia.py  (migración del Power BI de adherencia)
   - Pipeline de datos            -> dashboard/paginas/pipeline.py  (ejecuta el pipeline con su log y muestra el historial)
   - Completitud de datos         -> dashboard/paginas/completitud.py  (formulario y resultados del proceso)
 En todas se muestran la última actualización de datos y el pie de página.
@@ -23,7 +24,7 @@ import comun  # noqa: E402
 # se recargan, en orden de dependencia, para que la app nunca use una versión vieja de logic.py ni de pipeline/.
 for _modulo in ("pipeline.config", "pipeline.parametros", "pipeline.seguridad", "pipeline.utils", "pipeline.extract", "pipeline.transform_bev",
                 "pipeline.transform_costos", "pipeline.transform_ecv", "pipeline.mart", "pipeline.load", "pipeline.completitud", "pipeline.registro",
-                "pipeline.main", "pipeline.ingest", "logic", "comun"):
+                "pipeline.main", "pipeline.ingest", "logic", "logic_adherencia", "comun"):
     if _modulo in sys.modules:
         importlib.reload(sys.modules[_modulo])
 
@@ -33,9 +34,11 @@ comun.estilos()
 tablero = st.Page("tablero.py", title="Tablero", icon=":material/dashboard:", default=True)
 pipeline_pg = st.Page("paginas/pipeline.py", title="Pipeline de datos", icon=":material/play_circle:", url_path="pipeline")
 completitud = st.Page("paginas/completitud.py", title="Completitud de datos", icon=":material/fact_check:", url_path="completitud")
-comun.PAGINAS.update({"tablero": tablero, "pipeline": pipeline_pg, "completitud": completitud})
+adherencia = st.Page("paginas/adherencia.py", title="Análisis de adherencia", icon=":material/monitoring:", url_path="adherencia")
+comun.PAGINAS.update({"tablero": tablero, "adherencia": adherencia, "pipeline": pipeline_pg, "completitud": completitud})
 
-pagina = st.navigation({"": [tablero], "Datos y procesos": [pipeline_pg, completitud]})
+pagina = st.navigation({"": [tablero], "Seguimiento": [adherencia], "Datos y procesos": [pipeline_pg, completitud]})
+comun.conservar_filtros()
 comun.aviso_actualizacion()
 pagina.run()
 comun.pie()

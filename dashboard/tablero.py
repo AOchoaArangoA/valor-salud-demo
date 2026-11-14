@@ -6,7 +6,6 @@ los estilos y la ruta del proyecto.
 """
 from __future__ import annotations
 
-import textwrap
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +15,7 @@ import streamlit as st
 
 import comun  # noqa: E402
 import logic as L  # noqa: E402
-from pipeline import config, parametros, seguridad  # noqa: E402
+from pipeline import config, parametros  # noqa: E402
 
 # Color de cada nivel (figura "De los datos a la gestión del valor") y paleta categórica validada
 NIVEL = {1: "#1F3A8A", 2: "#0A8FA3", 3: "#4C9A2A", 4: "#7A4FB0", 5: "#7A4FB0", 6: "#D26E00"}
@@ -27,59 +26,16 @@ VERDE, AMBAR, ROJO = "#4C9A2A", "#E0A100", "#C0392B"
 COLOR_CAMBIO = {"Mejora (> +5)": VERDE, "Se mantiene (±5)": GRIS, "Empeora (< −5)": ROJO}
 
 
-@st.cache_data(show_spinner="Cargando datos…")
-def _datos(ruta: str, marca: float, llave: bytes | None = None):
-    """`marca` = fecha de modificación de los resultados: si se vuelve a correr el proceso, la caché se renueva sola."""
-    return L.cargar(Path(ruta), llave)
-
-
 @st.cache_data(show_spinner=False)
 def _aplicaciones(ruta: str, marca: float, llave: bytes | None = None):
     return L.cargar_aplicaciones(Path(ruta), llave)
 
 
-def pantalla_clave() -> None:
-    """Datos protegidos: se piden la clave una vez por sesión; la llave derivada queda solo en memoria."""
-    st.title("Datos protegidos")
-    st.markdown("Esta corrida está **cifrada**. Escriba la clave para abrirla; los datos se descifran solo en memoria.")
-    with st.form("clave"):
-        clave = st.text_input("Clave", type="password")
-        enviar = st.form_submit_button("Desbloquear")
-    if enviar:
-        llave = seguridad.llave_desde_clave(clave)
-        if llave is None:
-            st.error("Clave incorrecta.")
-        else:
-            st.session_state["llave_datos"] = llave
-            st.rerun()
-
-
-# ---- corrida de datos
-CORRIDAS = L.listar_corridas()
-if not CORRIDAS:
-    st.title("Valor en Salud · Retina")
-    st.info("Todavía no hay datos procesados. Vaya a **Pipeline de datos** (barra lateral) y suba el libro del formulario.")
-    st.stop()
-
-_cifradas = {str(c["ruta"]) for c in CORRIDAS if seguridad.carpeta_cifrada(c["ruta"])}
-_etiquetas = [(c["etiqueta"] + (" 🔒" if str(c["ruta"]) in _cifradas else "")) if [x["etiqueta"] for x in CORRIDAS].count(c["etiqueta"]) == 1 else f'{c["etiqueta"]} ({i + 1})'
-              for i, c in enumerate(CORRIDAS)]
-_pos = next((i for i, c in enumerate(CORRIDAS) if str(c["ruta"]) == st.session_state.get("corrida_ruta")), 0)
-_i = _etiquetas.index(st.sidebar.selectbox("Corrida de datos", _etiquetas, index=_pos,
-                                           help="Cada carga queda guardada con su prestador y versión; elija cuál ver (por defecto, la más reciente)."))
-st.session_state["corrida_ruta"] = str(CORRIDAS[_i]["ruta"])
-LLAVE = st.session_state.get("llave_datos") or (seguridad.llave_de_entorno() if seguridad.hay_cifrado() else None)
-if str(CORRIDAS[_i]["ruta"]) in _cifradas and LLAVE is None:
-    pantalla_clave()
-    st.stop()
-try:
-    MART, META = _datos(str(CORRIDAS[_i]["ruta"]), (CORRIDAS[_i]["ruta"] / "metadata.json").stat().st_mtime, LLAVE)
-except (FileNotFoundError, OSError, ValueError) as e:
-    st.error(f"No se pudo leer la corrida seleccionada: {e}")
-    st.stop()
+# ---- corrida de datos (selector compartido por todas las páginas)
+_CORRIDA, MART, META, LLAVE = comun.elegir_corrida()
 st.sidebar.markdown("---")
 
-APL_TODAS = _aplicaciones(str(CORRIDAS[_i]["ruta"]), (CORRIDAS[_i]["ruta"] / "metadata.json").stat().st_mtime, LLAVE)
+APL_TODAS = _aplicaciones(str(_CORRIDA["ruta"]), (_CORRIDA["ruta"] / "metadata.json").stat().st_mtime, LLAVE)
 TOL_PROG = int(META.get("tolerancia_programacion_dias", 8))   # corridas anteriores a la unificación usaban ±8
 DQ = META.get("calidad_insumo", {})
 SECA_OK = DQ.get("retina_seca_evaluable", True)
@@ -118,9 +74,7 @@ def color_sem(pct) -> str:
     return VERDE if pct >= L.UMBRAL_VERDE else (AMBAR if pct >= L.UMBRAL_AMBAR else ROJO)
 
 
-def rgba(hexc: str, a: float) -> str:
-    h = hexc.lstrip("#")
-    return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{a})"
+rgba = comun.rgba
 
 
 def etq(t) -> str:
@@ -145,28 +99,7 @@ def rango_con_holgura(valores, holgura=0.2, piso_cero=True):
     return [lo - holgura * span if (lo < 0 or not piso_cero) else lo, hi + holgura * span]
 
 
-def base_layout(fig, titulo: str, alto: int, **kw) -> None:
-    """Título envuelto en varias líneas (no se corta en columnas angostas) y leyenda horizontal SIEMPRE visible
-    justo debajo del título, con el margen superior calculado para ambos. Los ejes reservan espacio solos (automargin)."""
-    kw.pop("legend", None)                     # la posición de la leyenda es única para todas las gráficas
-    forzar = kw.pop("showlegend", None) is True
-    lineas = textwrap.wrap(titulo, 44) or [titulo]
-    t_titulo = 22 * len(lineas) + 16
-    nombres = [str(t.name) for t in fig.data if t.name and t.showlegend is not False]
-    con_leyenda = len(nombres) > 1 or (forzar and len(nombres) >= 1)
-    filas = max(1, -(-int(sum(len(n) + 7 for n in nombres) * 6.6) // 340)) if con_leyenda else 0
-    t_leyenda = filas * 19 + (6 if filas else 0)
-    total = alto + t_leyenda + (t_titulo - 28)
-    fig.update_layout(
-        height=total,
-        title=dict(text="<br>".join(lineas), font_size=14, x=0, xanchor="left", y=1, yanchor="top", yref="container", pad=dict(t=14)),
-        margin=dict(l=10, r=14, t=t_titulo + t_leyenda + 12, b=10), plot_bgcolor="#fff", paper_bgcolor="rgba(0,0,0,0)",
-        showlegend=bool(filas),
-        legend=dict(orientation="h", yref="container", yanchor="top", y=1 - (t_titulo + 2) / total, x=0, xanchor="left",
-                    font=dict(size=11), tracegroupgap=2),
-        uniformtext=dict(minsize=9, mode="show"), **kw)
-    fig.update_xaxes(automargin=True)
-    fig.update_yaxes(gridcolor="#EEF0F3", automargin=True)
+base_layout = comun.base_layout
 
 
 def desplegable_multiple(etiqueta: str, opciones: list, clave: str, ayuda: str = "") -> list:
@@ -181,20 +114,7 @@ def desplegable_multiple(etiqueta: str, opciones: list, clave: str, ayuda: str =
 
 # ============================================================================ filtros
 st.sidebar.markdown("### Filtros")
-dx_all = MART["diagnostico"].value_counts().index.tolist()
-dx_def = [d for d in ("DMREn", "EMD") if d in dx_all]
-if len(dx_def) < 2:   # p. ej. un prestador escribe "DMREh": no esconder datos por defecto; se parte de todos los diagnósticos
-    dx_def = dx_all
-dx_sel = st.sidebar.multiselect("Diagnóstico", dx_all, default=dx_def)
-med_all = sorted(MART["medicamento_label"].unique())
-med_sel = st.sidebar.multiselect("Medicamento", med_all, default=med_all)
-# Sede y EAPB vienen de la hoja de pacientes; una corrida que no las trae no muestra el filtro
-FILTROS_PACIENTE = {}
-for _col, _nombre in (("sede", "Sede"), ("eapb", "EAPB")):
-    if _col in MART and L.con_dato(MART[_col]).any():
-        _valores = MART[_col].where(L.con_dato(MART[_col]), "Sin dato").astype(str)
-        _todas = sorted(_valores.unique())
-        FILTROS_PACIENTE[_col] = (_valores, st.sidebar.multiselect(_nombre, _todas, default=_todas, key=f"filtro-{_col}"))
+_mascara_comun = comun.filtros_comunes(MART)   # diagnóstico, medicamento, sede y EAPB (compartidos con las demás páginas)
 anios = MART["anio_inicio"].dropna().astype(int)
 rango = st.sidebar.slider("Año de inicio del tratamiento", int(anios.min()), int(anios.max()),
                           (int(anios.min()), int(anios.max())))
@@ -202,9 +122,7 @@ seg = st.sidebar.radio("Seguimiento", ["Todos", "Con AV a S52", "Con AV a S52 y 
                        help="Los indicadores de S52/S104 solo usan paciente-ojo reingreso con dato en esa semana; "
                             "este filtro restringe TODO el tablero a esa cohorte. «S52 y S104» exige las dos mediciones.", key="seguimiento")
 
-_mascara = MART["diagnostico"].isin(dx_sel) & MART["medicamento_label"].isin(med_sel) & MART["anio_inicio"].between(*rango)
-for _valores, _sel in FILTROS_PACIENTE.values():
-    _mascara &= _valores.isin(_sel)
+_mascara = _mascara_comun & MART["anio_inicio"].between(*rango)
 df = MART[_mascara]
 if seg == "Con AV a S52":
     df = df[df["tiene_s52"]]
