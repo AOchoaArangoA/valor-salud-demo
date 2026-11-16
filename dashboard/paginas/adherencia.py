@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 import comun
 import logic as L
@@ -140,6 +139,39 @@ def tabla_resumen(t: pd.DataFrame, unidad: str) -> None:
     st.caption(f"Valores en {unidad}. n = paciente-ojo reingreso con dato.")
 
 
+VENN_NOMBRES = [(0.08, 0.13, "left"), (0.14, 0.86, "left"), (0.86, 0.86, "right"), (0.92, 0.13, "right")]
+
+
+def _elipse(cx, cy, w, h, ang, n=120) -> str:
+    t, a = np.linspace(0, 2 * np.pi, n), np.radians(ang)
+    x, y = w / 2 * np.cos(t), h / 2 * np.sin(t)
+    xs, ys = cx + x * np.cos(a) - y * np.sin(a), cy + x * np.sin(a) + y * np.cos(a)
+    return "M " + " L ".join(f"{u:.4f},{v:.4f}" for u, v in zip(xs, ys)) + " Z"
+
+
+def venn_antecedentes(df: pd.DataFrame) -> None:
+    zonas, totales, ninguno = A.venn_antecedentes(df)
+    nombres, total = list(A.ANTECEDENTES.values()), len(df)
+    colores = [CAT[0], CAT[1], CAT[2], CAT[3]]
+    fig = go.Figure()
+    for (cx, cy, w, h, ang), color in zip(A.VENN_ELIPSES, colores):
+        fig.add_shape(type="path", path=_elipse(cx, cy, w, h, ang), fillcolor=comun.rgba(color, .16), line=dict(color=color, width=2))
+    for clave, (x, y) in A.VENN_ZONAS.items():
+        n = zonas[clave]
+        cuales = " + ".join(nm for nm, b in zip(nombres, clave) if b == "1")
+        fig.add_scatter(x=[x], y=[y], mode="text", text=[f"<b>{miles(n)}</b><br>{dec(100 * n / total, 1)} %" if total else "0"],
+                        textfont=dict(size=11, color=TINTA), showlegend=False,
+                        hovertemplate=f"{cuales}<br>{miles(n)} POR ({dec(100 * n / total if total else 0, 1)} %)<extra></extra>")
+    for (x, y, lado), nm, color in zip(VENN_NOMBRES, nombres, colores):
+        fig.add_annotation(x=x, y=y, text=f"<b>{nm}</b><br>{miles(totales[nm])} ({dec(100 * totales[nm] / total if total else 0, 0)} %)",
+                           showarrow=False, xanchor=lado, font=dict(size=12, color=color), align=lado)
+    layout(fig, "Antecedentes clínicos: diabetes, HTA, dislipidemia e insulina",
+           f"n = {miles(total)} POR · cada zona cuenta los POR con exactamente esa combinación · {miles(ninguno)} sin ninguno de los cuatro", 420,
+           xaxis=dict(visible=False, range=[0, 1]), yaxis=dict(visible=False, range=[0.02, 0.98], scaleanchor="x", scaleratio=1))
+    fig.update_layout(plot_bgcolor="rgba(0,0,0,0)")
+    mostrar(fig)
+
+
 # ============================================================================ datos
 @st.cache_data(show_spinner="Preparando el análisis de adherencia…")
 def _datos(ruta: str, marca: float, llave: bytes | None = None) -> pd.DataFrame:
@@ -234,31 +266,8 @@ if VISTA == "1 · Población":
             mostrar(fig)
 
     col1, col2 = st.columns(2)
-    with col1:   # (5) combinaciones de antecedentes (UpSet)
-        combos, totales = A.combinaciones_antecedentes(df)
-        combos = combos.head(12)
-        nombres = list(totales.index)
-        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.62, 0.38], vertical_spacing=0.04)
-        xs = list(range(len(combos)))
-        fig.add_bar(x=xs, y=combos["n"], marker=dict(color=CAT[0], cornerradius=3), text=[miles(n) for n in combos["n"]], textposition="outside",
-                    textfont=dict(color=TINTA, size=11), showlegend=False,
-                    customdata=[" + ".join(c) if c else "Ninguno" for c in combos["combinacion"]],
-                    hovertemplate="%{customdata}: %{y:,} POR<extra></extra>", row=1, col=1)
-        for x, combo in zip(xs, combos["combinacion"]):
-            ys = [nombres.index(a) for a in combo]
-            fig.add_scatter(x=[x] * len(nombres), y=list(range(len(nombres))), mode="markers", showlegend=False, hoverinfo="skip",
-                            marker=dict(size=10, color=VACIO), row=2, col=1)
-            if ys:
-                fig.add_scatter(x=[x] * len(ys), y=ys, mode="lines+markers", showlegend=False, hoverinfo="skip",
-                                marker=dict(size=11, color=TINTA), line=dict(color=TINTA, width=2), row=2, col=1)
-        layout(fig, "Antecedentes clínicos: combinaciones exactas", f"n = {miles(len(df))} POR · cada columna es una combinación; los puntos negros dicen cuál",
-               380, bargap=0.35)
-        fig.update_yaxes(title="POR", row=1, col=1, range=[0, float(combos["n"].max()) * 1.2 if len(combos) else 1])
-        fig.update_yaxes(tickvals=list(range(len(nombres))), ticktext=[f"{a} ({miles(totales[a])})" for a in nombres], autorange="reversed",
-                         showgrid=False, row=2, col=1)
-        fig.update_xaxes(showticklabels=False, showgrid=False, row=1, col=1)
-        fig.update_xaxes(showticklabels=False, showgrid=False, row=2, col=1)
-        mostrar(fig)
+    with col1:   # (5) antecedentes clínicos: diagrama de Venn de 4 conjuntos (como la hoja 2b del PBI)
+        venn_antecedentes(df)
     with col2:   # (6) medicamento en línea de base
         barras_100(A.medicamento_por_dx(df), {m: CAT[i % len(CAT)] for i, m in enumerate(sorted(df["medicamento_label"].astype(str).unique()))},
                    "Medicamento en línea de base por diagnóstico", "% de paciente-ojo reingreso dentro de cada diagnóstico")

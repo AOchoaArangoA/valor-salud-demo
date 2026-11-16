@@ -152,6 +152,35 @@ def combinaciones_antecedentes(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Serie
     return combos, totales
 
 
+# Venn de 4 conjuntos: 4 elipses (con círculos no se forman las 15 zonas). Centro x, centro y, ancho, alto, ángulo (grados),
+# en un lienzo de 0 a 1. Cada zona lleva su etiqueta en un punto que está dentro de ella (lo verifica tests/test_adherencia.py
+# con dentro_de_elipse).
+VENN_ELIPSES = [(0.350, 0.400, 0.72, 0.45, 140), (0.450, 0.500, 0.72, 0.45, 140), (0.544, 0.500, 0.72, 0.45, 40), (0.644, 0.400, 0.72, 0.45, 40)]
+VENN_ZONAS = {"1000": (0.14, 0.42), "0100": (0.32, 0.72), "0010": (0.68, 0.72), "0001": (0.85, 0.42), "1100": (0.23, 0.59),
+              "1010": (0.29, 0.30), "1001": (0.50, 0.17), "0110": (0.50, 0.66), "0101": (0.71, 0.30), "0011": (0.77, 0.59),
+              "1110": (0.35, 0.50), "1101": (0.61, 0.24), "1011": (0.39, 0.24), "0111": (0.65, 0.50), "1111": (0.50, 0.38)}
+
+
+def dentro_de_elipse(x: float, y: float, elipse) -> bool:
+    cx, cy, w, h, ang = elipse
+    t = np.radians(ang)
+    dx, dy = x - cx, y - cy
+    u, v = dx * np.cos(t) + dy * np.sin(t), -dx * np.sin(t) + dy * np.cos(t)
+    return (u / (w / 2)) ** 2 + (v / (h / 2)) ** 2 <= 1
+
+
+def venn_antecedentes(df: pd.DataFrame) -> Tuple[Dict[str, int], Dict[str, int], int]:
+    """Para el diagrama de Venn (hoja 2b del PBI): POR en cada una de las 15 zonas, con clave de 4 dígitos en el orden
+    fijo de ANTECEDENTES (Diabetes, HTA, Dislipidemia, Insulina): "1010" = diabetes y dislipidemia, sin HTA ni insulina.
+    Devuelve (zonas, total por antecedente, POR sin ninguno de los cuatro)."""
+    m = df[list(ANTECEDENTES)].apply(pd.to_numeric, errors="coerce").fillna(0).astype(int).eq(1)
+    clave = m.astype(int).astype(str).agg("".join, axis=1)
+    cuenta = clave.value_counts()
+    zonas = {f"{i:04b}": int(cuenta.get(f"{i:04b}", 0)) for i in range(1, 16)}
+    totales = {nombre: int(m[col].sum()) for col, nombre in ANTECEDENTES.items()}
+    return zonas, totales, int(cuenta.get("0000", 0))
+
+
 def medicamento_por_dx(df: pd.DataFrame) -> pd.DataFrame:
     return reparto(df, "diagnostico", df["medicamento_label"].astype(str), sorted(df["medicamento_label"].astype(str).unique()))
 

@@ -147,6 +147,23 @@ class TestCifrasIgualesAlPBI(unittest.TestCase):
         self.assertEqual(len(self.df), self.df["pacienteojoreingreso"].nunique())
 
 
+class TestVenn(unittest.TestCase):
+    def test_zonas_cuadran_con_las_medidas_del_pbi(self):
+        df = datos_app()
+        zonas, totales, ninguno = A.venn_antecedentes(df)
+        self.assertEqual(sum(zonas.values()) + ninguno, len(df))
+        pbi = dax(modelo_pbi())
+        for i, (col, nombre) in enumerate(A.ANTECEDENTES.items()):
+            con = sum(n for k, n in zonas.items() if k[i] == "1")
+            self.assertEqual(con, totales[nombre])
+            self.assertEqual(con, pbi[f"# POR con {col.replace('ant_', '')}"])
+
+    def test_cada_etiqueta_cae_en_su_zona(self):
+        for clave, (x, y) in A.VENN_ZONAS.items():
+            zona = "".join("1" if A.dentro_de_elipse(x, y, e) else "0" for e in A.VENN_ELIPSES)
+            self.assertEqual(zona, clave)
+
+
 class TestCorrecciones(unittest.TestCase):
     """Donde la app corrige al PBI, la prueba deja escrita la diferencia esperada."""
 
