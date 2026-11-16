@@ -129,12 +129,39 @@ def _tratamiento_previo(lb: pd.DataFrame, rng: np.random.Generator) -> pd.DataFr
     return lb
 
 
+# Año 2 de demostración: probabilidad de que un paciente-ojo que dejó de inyectarse en el año 1 siga en tratamiento, y de que
+# abandone después de cada dosis del año 2. Con estos valores ~54 % de los POR con 2 años posibles tiene dosis en el año 2
+# (5,0 en promedio entre quienes siguen, de 1 a 11). Los datos reales del prestador base tienen ~21 %: esto es para demostración.
+CONTINUA_ANIO2, ABANDONO_ANIO2 = 0.95, 0.03
+
+# Antecedentes por diagnóstico, en proporciones tomadas de los datos reales del prestador base (dim_Paciente del PBI de
+# adherencia, nov-2026): diabetes, HTA y dislipidemia. La insulina casi no viene diligenciada en los datos reales; se
+# simula solo en diabéticos (35 %).
+ANTECEDENTES_DX = {  # dx: (diabetes, hta, dislipidemia)
+    "DMREn": (.28, .50, .23), "EMD": (.73, .54, .33), "OVR": (.32, .55, .30), "MNV": (.39, .46, .19), "Desconocido/No revelado": (.05, .25, .13)}
+
+
+def _antecedentes(pac: pd.DataFrame, lb: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
+    """Reemplaza ant_diabetes, ant_hta, ant_dislipidemia y ant_insulina según el diagnóstico de la primera línea de base del
+    paciente. Flujo aleatorio propio (semilla + 7): no cambia ningún otro dato."""
+    pac = pac.copy()
+    dx = pac["numero_doc"].map(lb.sort_values("id_registro").drop_duplicates("numero_doc").set_index("numero_doc")["dx_ppal"])
+    p = np.array([ANTECEDENTES_DX.get(d, (.3, .5, .25)) for d in dx])
+    u = rng.random((len(pac), 4))
+    pac["ant_diabetes"] = (u[:, 0] < p[:, 0]).astype(int)
+    pac["ant_hta"] = (u[:, 1] < p[:, 1]).astype(int)
+    pac["ant_dislipidemia"] = (u[:, 2] < p[:, 2]).astype(int)
+    pac["ant_insulina"] = ((pac["ant_diabetes"] == 1) & (u[:, 3] < .35)).astype(int)
+    return pac
+
+
 def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     rng_rein = np.random.default_rng(seed + 3)    # flujo aparte para los reingresos
     rng_cond = np.random.default_rng(seed + 1)   # flujo aparte: no altera lo demás
     rng_s52 = np.random.default_rng(seed + 4)    # flujo aparte para la fecha de la visita a S52 añadida
     rng_sede = np.random.default_rng(seed + 5)   # flujo aparte para la sede (31-oct-2026): no altera ningún otro dato
+    rng_a2 = np.random.default_rng(seed + 8)     # flujo aparte para el año 2 de demostración (16-nov-2026)
     pac, lb, ap, co, ay, cv, ecv = [], [], [], [], [], [], []
     ids = {"lb": 0, "ap": 0, "co": 0, "ay": 0, "cv": 0}
     dx_names, dx_cods, dx_p = zip(*DX)
@@ -193,21 +220,21 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
             if not reingreso:
                 ganancias_ojos.append(g52)
 
-            def av(t_sem: float) -> float:
+            def av(t_sem: float, r: np.random.Generator = rng) -> float:
                 base = np.interp(t_sem, [0, 16, 52, 104], [L0, L0 + g16, L0 + g52, L0 + g104])
-                return float(np.clip(base + rng.normal(0, 2.2), 5, 90))
+                return float(np.clip(base + r.normal(0, 2.2), 5, 90))
 
             B = float(np.clip(rng.normal(440, 95), 250, 750))
             T = 265 + rng.normal(0, 28) + (55 if resp < 0.6 else 0)
 
-            def examen(t_sem: float) -> Tuple[int, int, int, float]:
+            def examen(t_sem: float, r: np.random.Generator = rng) -> Tuple[int, int, int, float]:
                 # Respuesta anatómica rápida: con la dosis de carga la mayoría queda sin líquido hacia S16 (insumo de calidad óptima).
                 liq = 0.78 + 0.22 * resp_eff
                 p_irf = float(np.clip(0.88 - 1.02 * liq * _sigmoide_t(t_sem, 5), 0.03, 0.92))
                 p_srf = float(np.clip(0.62 - 0.62 * liq * _sigmoide_t(t_sem, 5), 0.02, 0.70))
-                irf, srf = int(rng.random() < p_irf), int(rng.random() < p_srf)
-                esp = T + (B - T) * np.exp(-t_sem / 10) + irf * 35 + srf * 25 + rng.normal(0, 14)
-                return irf, srf, int(rng.random() < max(0.02, (0.35 if dx == "MNV" else 0.12) * np.exp(-t_sem / 12))), float(np.clip(esp, 150, 800))
+                irf, srf = int(r.random() < p_irf), int(r.random() < p_srf)
+                esp = T + (B - T) * np.exp(-t_sem / 10) + irf * 35 + srf * 25 + r.normal(0, 14)
+                return irf, srf, int(r.random() < max(0.02, (0.35 if dx == "MNV" else 0.12) * np.exp(-t_sem / 12))), float(np.clip(esp, 150, 800))
 
             # ----- calendario treat & extend
             n_total = int(rng.choice(_NDOSIS_V, p=_NDOSIS_P))      # cuántas aplicaciones recibe en total (puede ser 1)
@@ -319,6 +346,43 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                                    agu_vis=letras_a_denominador(av((f_of - inicio).days / 7)), agu_vis_num=np.nan, av_tipo="Corregido", cod_dx_ppal=cod,
                                    dx_ppal=dx, medico=medico, endoftalmitis=0, tipo_endoftalmitis="No Aplica", com_ambliopia=0, com_maculopatia=0,
                                    com_opa_med=0, com_glau_neu=0, com_evr=0))
+            # ----- año 2 (16-nov-2026, demostración): parte de quienes completaron la carga (≥ 3 dosis) y dejaron de inyectarse
+            # en el año 1 sigue en tratamiento
+            # hasta el día 728. Flujo aleatorio propio (semilla + 8) y solo en episodios con 2 años posibles y sin reingreso
+            # posterior del mismo ojo: el resto del prestador sintético no cambia.
+            if ((ojo, reingreso + 1) not in episodios and inicio + pd.Timedelta(days=728) <= CORTE
+                    and k >= 3 and (ultima - inicio).days < 364 and rng_a2.random() < CONTINUA_ANIO2):
+                fecha = filas_ap[-1]["fecha_programacion"] + pd.Timedelta(days=int(rng_a2.integers(-5, 15)))
+                tope_a2 = int(rng_a2.choice([5, 6, 8, 10, 12, 16], p=[.15, .20, .22, .18, .15, .10]))   # cada paciente se extiende distinto
+                intervalo = int(np.clip(intervalo, 5, tope_a2))
+                while (fecha - inicio).days <= 728 and fecha <= CORTE:
+                    k += 1
+                    t_sem = (fecha - inicio).days / 7
+                    irf, srf, hem, esp = examen(t_sem, rng_a2)
+                    intervalo = int(np.clip(intervalo + (2 if irf == 0 and srf == 0 else -2), 5, tope_a2))
+                    planeada = fecha + pd.Timedelta(days=7 * intervalo)
+                    ids["ap"] += 1
+                    ap.append(dict(id_registro=ids["ap"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
+                                   numero_doc=doc, ojo=ojo, pac_ojo_rei_tto=f"{clave}Aplicación intravítrea", reingreso=reingreso,
+                                   tipo_tto="Aplicación intravítrea", con_dosis=k, fecha_aplicacion=fecha, esquema="Treat & extend",
+                                   molecula=molecula, semana_extension=intervalo, fecha_programacion=planeada, medico=medico, dx_ppal=cod,
+                                   dx_ppal_desc=dx, plan_pago="Plan 1"))
+                    den = letras_a_denominador(av(t_sem, rng_a2))
+                    ids["co"] += 1
+                    co.append(dict(id_registro=ids["co"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
+                                   numero_doc=doc, ojo=ojo, reingreso=reingreso, tipo_consulta="Retina", con_consulta=k + 1, fecha_consulta=fecha,
+                                   agu_vis=den, agu_vis_num=den, av_tipo="Corregido", cod_dx_ppal=cod, dx_ppal=dx, medico=medico, endoftalmitis=0,
+                                   tipo_endoftalmitis="No Aplica", com_ambliopia=0, com_maculopatia=0, com_opa_med=0, com_glau_neu=0, com_evr=0))
+                    ids["ay"] += 1
+                    ay.append(dict(id_registro=ids["ay"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
+                                   numero_doc=doc, ojo=ojo, reingreso=reingreso, tipo_ayuda="OCT", con_ayuda=k + 1, fecha_ayuda=fecha, oct=round(esp),
+                                   oct_dep=int(rng_a2.random() < .05), oct_irf=irf, oct_srf=srf, oct_hemorragia=hem, oct_quistes=int(irf and rng_a2.random() < .5),
+                                   oct_hrfs=int(rng_a2.random() < .3), oct_atrofia=int(rng_a2.random() < .05 + t_sem / 600),
+                                   oct_fibrosis=int(rng_a2.random() < .04 + t_sem / 700)))
+                    ultima = fecha
+                    if rng_a2.random() < ABANDONO_ANIO2:
+                        break
+                    fecha = planeada + pd.Timedelta(days=int(rng_a2.integers(-5, 12)))
             fin_previo[ojo] = ultima
             inactivo = (CORTE - ultima).days > 180 or (ojo, reingreso + 1) in episodios
             lb.append(dict(id_registro=len(lb) + 1, fecha_registro=f_dx_ojo, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
@@ -366,6 +430,7 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
     hojas["_ecv"] = pd.DataFrame(ecv)
     hojas = _ajustar_estructura(hojas, np.random.default_rng(seed + 2))
     hojas["lineabase"] = _tratamiento_previo(hojas["lineabase"], np.random.default_rng(seed + 6))
+    hojas["pacientes"] = _antecedentes(hojas["pacientes"], hojas["lineabase"], np.random.default_rng(seed + 7))
     return hojas
 
 
