@@ -124,8 +124,12 @@ def violin(df: pd.DataFrame, col: str, titulo: str, eje: str, recorte: float = 0
                        meanline=dict(visible=False), points=False, spanmode="hard", showlegend=False,
                        hoverinfo="y")
     tope = float(v[col].quantile(recorte))
-    layout(fig, titulo, f"n = {miles(len(v))} POR · la caja va del cuartil 1 al 3; la línea es la mediana · eje recortado en el percentil {int(recorte * 100)} ({dec(tope, 0)})",
-           340, yaxis=dict(title=eje, range=[min(0, float(v[col].min())), tope * 1.05]), xaxis=dict(title=None))
+    piso = min(0.0, float(v[col].quantile(1 - recorte)))
+    negativos = int((v[col] < 0).sum())
+    nota = f" · {miles(negativos)} con valor negativo (revisar fechas en el formulario)" if negativos else ""
+    layout(fig, titulo, f"n = {miles(len(v))} POR · la caja va del cuartil 1 al 3; la línea es la mediana · eje recortado entre los percentiles "
+                        f"{int(round((1 - recorte) * 100))} y {int(recorte * 100)}{nota}",
+           340, yaxis=dict(title=eje, range=[piso - 0.05 * abs(tope - piso), tope * 1.05]), xaxis=dict(title=None))
     mostrar(fig)
 
 
@@ -180,6 +184,9 @@ def _datos(ruta: str, marca: float, llave: bytes | None = None) -> pd.DataFrame:
 
 
 CORRIDA, MART, META, LLAVE = comun.elegir_corrida()
+SECA_OK = META.get("calidad_insumo", {}).get("retina_seca_evaluable", True)   # misma regla del Tablero
+NO_SECA = (f"**No evaluable en esta corrida:** {L.N_SECA[0].lower() + L.N_SECA[1:]} y respuesta al tratamiento necesitan el líquido intra y "
+           "subretiniano (oct_irf, oct_srf), que el insumo no trae completos. Es la misma nota de calidad de datos del Tablero.")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Filtros")
 MASCARA = comun.filtros_comunes(MART)
@@ -254,7 +261,8 @@ if VISTA == "1 · Población":
     for col, habito in zip(cols, ("Tabaquismo", "Actividad física")):
         with col:
             t = h[h["habito"] == habito]
-            cats = [str(c) for c in t["categoria"].cat.categories if (t["categoria"].astype(str) == str(c)).any()]
+            fm = t[t["sexo"].isin(["Femenino", "Masculino"])]
+            cats = [str(c) for c in t["categoria"].cat.categories if fm.loc[fm["categoria"].astype(str) == str(c), "n"].sum() > 0]
             fig = go.Figure()
             for sexo in ("Femenino", "Masculino"):
                 x = t[t["sexo"] == sexo].assign(categoria=lambda d: d["categoria"].astype(str)).set_index("categoria").reindex(cats)
@@ -342,9 +350,12 @@ if VISTA == "3 · Resultados":
         histograma(df[f"dif_micras_sem{s}"], 25, f"Diferencia en micras a la semana {s}", "Cambio frente a la línea base (µm)", CAT[2])
     col1, col2 = st.columns(2)
     with col1:   # (14) retina seca
-        t = A.retina_seca_por_dx(df, s)
+        t = A.retina_seca_por_dx(df, s) if SECA_OK else pd.DataFrame(columns=["evaluados"])
         t = t[t["evaluados"] > 0]
-        if t.empty:
+        if not SECA_OK:
+            st.markdown(f"**{L.N_SECA} a la semana {s}**")
+            st.info(NO_SECA)
+        elif t.empty:
             sin_datos(L.N_SECA.lower())
         else:
             fig = go.Figure(go.Bar(y=etiqueta_dx(t, "diagnostico", "evaluados"), x=t["pct"], orientation="h", marker=dict(color=CAT[2], cornerradius=3),
@@ -355,8 +366,12 @@ if VISTA == "3 · Resultados":
                    80 + 46 * len(t), yaxis=dict(autorange="reversed"), xaxis=dict(range=[0, 115], ticksuffix=" %"), bargap=0.35)
             mostrar(fig)
     with col2:
-        barras_100(A.respondedor_por_dx(df), COLOR_RESP, "Respuesta al tratamiento un mes después de la 3ª dosis",
-                   "Se mide a la semana 16; no cambia con el selector · % dentro de cada diagnóstico")
+        if not SECA_OK:
+            st.markdown("**Respuesta al tratamiento un mes después de la 3ª dosis**")
+            st.info(NO_SECA)
+        else:
+            barras_100(A.respondedor_por_dx(df), COLOR_RESP, "Respuesta al tratamiento un mes después de la 3ª dosis",
+                       "Se mide a la semana 16; no cambia con el selector · % dentro de cada diagnóstico")
 
 
 # ============================================================================ 4 · Adherencia y resultados
@@ -387,6 +402,10 @@ if VISTA == "4 · Adherencia y resultados":
                                                          ("pct_seca", f"% con {L.N_SECA[0].lower() + L.N_SECA[1:]} a la semana {s}", "%", " %"),
                                                          ("letras", f"Cambio promedio de letras a la semana {s}", "Letras", ""))):
             with col:
+                if met == "pct_seca" and not SECA_OK:
+                    st.markdown(f"**{titulo}**")
+                    st.info(NO_SECA)
+                    continue
                 fig = go.Figure()
                 dxs = list(r["diagnostico"].cat.categories)
                 for grupo in ("Adherente", "No adherente"):

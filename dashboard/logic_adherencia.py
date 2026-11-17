@@ -46,6 +46,8 @@ def cargar(directorio: Path, mart: pd.DataFrame, llave: Optional[bytes] = None) 
             extra = seguridad.leer_parquet(Path(directorio) / f"{archivo}.parquet", llave)
         except (OSError, ValueError):
             extra = pd.DataFrame(columns=["pacienteojoreingreso"])
+        if archivo == "evolucion":   # universo de las clases de AV/OCT, retina seca, respondedor y cruces (fact_EvolAV del PBI)
+            d["tiene_evolucion"] = d["pacienteojoreingreso"].isin(set(extra.get("pacienteojoreingreso", [])))
         presentes = [c for c in cols if c in extra.columns and c not in d.columns]
         if presentes:
             extra = extra.drop_duplicates("pacienteojoreingreso")[["pacienteojoreingreso"] + presentes]
@@ -222,20 +224,30 @@ def adherencia_por_dx(df: pd.DataFrame, semana: int) -> pd.DataFrame:
 
 
 # =========================================================================== 3 · Resultados
+def con_evaluacion(df: pd.DataFrame) -> pd.DataFrame:
+    """Solo los POR con al menos un registro de evolución (OCT o AV), como la tabla fact_EvolAV_OCT del PBI. Los POR sin
+    ningún registro no cuentan como «Sin evaluar»: no entran (con datos reales del prestador base son 717 de 3.334)."""
+    return df[df["tiene_evolucion"].fillna(False).astype(bool)] if "tiene_evolucion" in df else df
+
+
 def clase_av_por_dx(df: pd.DataFrame, semana: int) -> pd.DataFrame:
+    df = con_evaluacion(df)
     return reparto(df, "diagnostico", con_sin_evaluar(df[f"clase_AV_sem{semana}"], CLASES_AV), ORDEN_AV)
 
 
 def clase_oct_por_dx(df: pd.DataFrame, semana: int) -> pd.DataFrame:
+    df = con_evaluacion(df)
     return reparto(df, "diagnostico", con_sin_evaluar(df[f"clase_OCT_sem{semana}"]), ORDEN_OCT)
 
 
 def respondedor_por_dx(df: pd.DataFrame) -> pd.DataFrame:
+    df = con_evaluacion(df)
     return reparto(df, "diagnostico", con_sin_evaluar(df["Respondedor_sem16"]), ORDEN_RESP)
 
 
 def retina_seca_por_dx(df: pd.DataFrame, semana: int) -> pd.DataFrame:
     """% con retina seca entre los POR evaluados en la semana, por diagnóstico; sin_evaluar aparte."""
+    df = con_evaluacion(df)
     v = pd.to_numeric(df[f"RetinaSeca_sem{semana}"], errors="coerce")
     t = pd.DataFrame({"diagnostico": df["diagnostico"], "v": v})
     g = t.groupby("diagnostico")["v"].agg(evaluados="count", secos="sum", total="size").reset_index()
@@ -248,6 +260,7 @@ def retina_seca_por_dx(df: pd.DataFrame, semana: int) -> pd.DataFrame:
 def cruce_av_oct(df: pd.DataFrame, semana: int) -> Tuple[pd.DataFrame, float]:
     """Matriz clase AV (filas) × clase OCT (columnas) en número de POR, y % de POR sin AV evaluada en la semana
     (medidas DAX # POR Cruce V1V2V3 y % Sin Evaluar AV semX)."""
+    df = con_evaluacion(df)
     av = con_sin_evaluar(df[f"clase_AV_sem{semana}"], CLASES_AV)
     oct_ = con_sin_evaluar(df[f"clase_OCT_sem{semana}"])
     t = pd.crosstab(av, oct_).reindex(index=[c for c in ORDEN_AV if c in set(av)], columns=[c for c in ORDEN_OCT if c in set(oct_)]).fillna(0).astype(int)

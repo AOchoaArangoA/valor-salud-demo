@@ -164,6 +164,28 @@ class TestVenn(unittest.TestCase):
             self.assertEqual(zona, clave)
 
 
+class TestUniversoEvolucion(unittest.TestCase):
+    """Con datos reales hay POR sin ningún registro de OCT/AV (717 de 3.334 en el prestador base). Como en el PBI
+    (tabla fact_EvolAV_OCT), las clases de AV/OCT, la retina seca, el respondedor y los cruces no los cuentan como
+    «Sin evaluar»: quedan fuera. Los sintéticos no tienen ese caso; aquí se simula."""
+
+    def test_por_sin_evolucion_no_cuentan(self):
+        df = datos_app()
+        self.assertTrue(df["tiene_evolucion"].all())
+        sin = df.copy()
+        quitar = sin.index[:200]
+        sin.loc[quitar, "tiene_evolucion"] = False
+        sin.loc[quitar, [c for c in sin.columns if c.startswith(("clase_", "RetinaSeca_")) or c == "Respondedor_sem16"]] = np.nan
+        self.assertEqual(int(A.clase_av_por_dx(sin, 52)["n"].sum()), len(df) - 200)
+        self.assertEqual(int(A.clase_oct_por_dx(sin, 52)["n"].sum()), len(df) - 200)
+        self.assertEqual(int(A.respondedor_por_dx(sin)["n"].sum()), len(df) - 200)
+        self.assertEqual(int(A.retina_seca_por_dx(sin, 52)["total"].sum()), len(df) - 200)
+        t, pct = A.cruce_av_oct(sin, 16)
+        self.assertEqual(int(t.values.sum()), len(df) - 200)
+        evo = sin[sin["tiene_evolucion"]]
+        self.assertAlmostEqual(pct, 100 * evo["clase_AV_sem16"].isna().mean())
+
+
 class TestCorrecciones(unittest.TestCase):
     """Donde la app corrige al PBI, la prueba deja escrita la diferencia esperada."""
 
