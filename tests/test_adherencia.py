@@ -186,6 +186,43 @@ class TestUniversoEvolucion(unittest.TestCase):
         self.assertAlmostEqual(pct, 100 * evo["clase_AV_sem16"].isna().mean())
 
 
+class TestHoja3a(unittest.TestCase):
+    """Réplica de la hoja 3a del PBI (tabla de adherencia por diagnóstico, tabla de clase AV e histograma de letras).
+    Las cifras se compararon además, fila por fila, con la foto del PBI usando el formulario real (19-nov-2026)."""
+
+    def setUp(self):
+        self.df = datos_app()
+        self.pbi = dax(modelo_pbi())
+
+    def test_tabla_adherencia(self):
+        t = A.tabla_adherencia_dx(self.df, 16)
+        pct, si, n = A.adherencia_semanas(self.df)[16]
+        self.assertEqual(int(t.loc["Total", ("Sí", "n")]), si)
+        self.assertEqual(int(t.loc["Total", ("Total", "n")]), n)
+        self.assertAlmostEqual(t.loc["Total", ("Sí", "pct")], pct)
+        self.assertAlmostEqual(t.drop("Total")[("Total", "pct")].sum(), 100.0)
+        cuenta = self.pbi["Adherencia sem16 (dx × sí/no)"]
+        for dx in t.index.drop("Total"):
+            self.assertEqual(int(t.loc[dx, ("No", "n")]), int(cuenta.get((dx, 0), 0)))
+            self.assertEqual(int(t.loc[dx, ("Sí", "n")]), int(cuenta.get((dx, 1), 0)))
+            self.assertAlmostEqual(t.loc[dx, ("Total", "apl")], self.pbi["Promedio Apl Acum sem16 (dx)"][dx])
+        self.assertEqual(list(t.index[:-1]), sorted(t.index[:-1], key=str.lower))
+
+    def test_tabla_clase_av(self):
+        for s in (16, 52, 104):
+            t = A.tabla_clase_av(self.df, s)
+            pbi = self.pbi[f"Clase AV sem{s} (dx × clase)"]
+            for (dx, clase), n in pbi.items():
+                self.assertEqual(int(t.loc[dx, clase]), int(n))
+            self.assertEqual(int(t.loc["Total", "Total"]), int(pbi.sum()))
+
+    def test_histograma_con_los_intervalos_del_pbi(self):
+        v = pd.Series([-26, -25, -1, 0, 24, 25, 60])
+        h = A.histograma_letras_pbi(v, 104).set_index("inicio")["n"].to_dict()
+        self.assertEqual(h, {-50: 1, -25: 2, 0: 2, 25: 1, 50: 1})       # INT de DAX redondea hacia abajo
+        self.assertEqual(A.BIN_LETRAS_PBI, {16: 10, 52: 13, 104: 25})
+
+
 class TestCorrecciones(unittest.TestCase):
     """Donde la app corrige al PBI, la prueba deja escrita la diferencia esperada."""
 

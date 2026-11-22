@@ -14,8 +14,8 @@ from streamlit.testing.v1 import AppTest
 ROOT = Path(__file__).resolve().parents[1]
 APP = str(ROOT / "dashboard" / "app.py")
 sys.path.insert(0, str(ROOT / "dashboard"))
-PESTANAS = ["1 · Población", "2 · Inicio y adherencia", "3 · Resultados", "4 · Adherencia y resultados", "5 · Carga de tratamiento"]
-SEMANA = {"2 · Inicio y adherencia": ("sem-adh", [12, 16, 20]), "3 · Resultados": ("sem-res", [16, 52, 104]),
+PESTANAS = ["1 · Población", "2 · Adherencia y AV", "3 · Resultados", "4 · Adherencia y resultados", "5 · Carga de tratamiento"]
+SEMANA = {"2 · Adherencia y AV": ("sel-clase-av", [16, 52, 104]), "3 · Resultados": ("sem-res", [16, 52, 104]),
           "4 · Adherencia y resultados": ("sem-cruce", [16, 52, 104]), "5 · Carga de tratamiento": ("sem-ext", [52, 104])}
 NIVELES = ["1 · Visión ejecutiva", "2 · Cohortes", "3 · Gestión de la atención", "4 · Paciente-ojo", "5 · Calidad de vida", "6 · Valor", "7 · Metodología"]
 

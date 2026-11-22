@@ -314,3 +314,59 @@ def resumen_inyecciones(df: pd.DataFrame) -> pd.DataFrame:
     a1 = resumen_numerico(base, "apl_anio1").set_index("diagnostico").add_suffix(" año 1")
     a2 = resumen_numerico(base, "apl_anio2").set_index("diagnostico").add_suffix(" año 2")
     return a1.join(a2, how="outer").reindex(a1.index).reset_index()
+
+
+# =========================================================================== réplica de la hoja 3a del PBI
+# «Variables MPR — Adherencia y Agudeza Visual»: el equipo experto pidió verla igual que en el PBI (19-nov-2026).
+BIN_LETRAS_PBI = {16: 10, 52: 13, 104: 25}   # columnas «dif_lts_semX (ubicaciones)» del PBI: INT(x / ancho) * ancho
+
+
+def _orden_alfabetico(valores) -> List[str]:
+    """Orden de las filas en las tablas dinámicas del PBI: alfabético sin distinguir mayúsculas."""
+    return sorted({str(v) for v in valores}, key=str.lower)
+
+
+def tabla_adherencia_dx(df: pd.DataFrame, semana: int = 16) -> pd.DataFrame:
+    """Tabla «Adherencia a dosis de carga — semana 16, por diagnóstico» del PBI. Filas: diagnóstico (orden alfabético)
+    y Total. Columnas (grupo, medida): grupo No / Sí / Total; medida apl = promedio de aplicaciones acumuladas a la
+    semana, n = número de POR, pct = % sobre el total general (DIVIDE(COUNT, ScopedEval(COUNT, [])) del PBI)."""
+    adh = pd.to_numeric(df[f"Adherencia_final_{semana}"], errors="coerce")
+    col = f"apl_acum_sem{semana}"
+    dosis = pd.to_numeric(df[col], errors="coerce") if col in df else pd.Series(np.nan, index=df.index)
+    t = pd.DataFrame({"dx": df["diagnostico"].astype(str), "grupo": adh.map({0: "No", 1: "Sí"}), "dosis": dosis}).dropna(subset=["grupo"])
+    total = len(t)
+    filas = _orden_alfabetico(t["dx"]) + ["Total"]
+    cols = pd.MultiIndex.from_product([["No", "Sí", "Total"], ["apl", "n", "pct"]])
+    out = pd.DataFrame(index=filas, columns=cols, dtype=float)
+    for fila in filas:
+        x = t if fila == "Total" else t[t["dx"] == fila]
+        for grupo in ("No", "Sí", "Total"):
+            y = x if grupo == "Total" else x[x["grupo"] == grupo]
+            out.loc[fila, (grupo, "apl")] = y["dosis"].mean() if len(y) else np.nan
+            out.loc[fila, (grupo, "n")] = len(y)
+            out.loc[fila, (grupo, "pct")] = 100 * len(y) / total if total else np.nan
+    return out
+
+
+def tabla_clase_av(df: pd.DataFrame, semana: int) -> pd.DataFrame:
+    """Tabla «Clase de ganancia de agudeza visual por diagnóstico (semana seleccionable)» del PBI: POR por diagnóstico y
+    clase (empeora, mantiene, mejora, Sin evaluar) con su Total. Solo POR con registro de evolución (fact_EvolAV_OCT)."""
+    d = con_evaluacion(df)
+    clase = d[f"clase_AV_sem{semana}"].astype(object).where(d[f"clase_AV_sem{semana}"].notna(), SIN_EVALUAR)
+    t = pd.crosstab(d["diagnostico"].astype(str), clase)
+    columnas = ["empeora", "mantiene", "mejora", SIN_EVALUAR]
+    t = t.reindex(index=_orden_alfabetico(t.index), columns=columnas, fill_value=0)
+    t["Total"] = t.sum(axis=1)
+    t.loc["Total"] = t.sum()
+    return t.astype(int)
+
+
+def histograma_letras_pbi(serie: pd.Series, semana: int) -> pd.DataFrame:
+    """Gráfico «Distribución de diferencia en letras AV (semana seleccionable)» del PBI: cada valor cae en el intervalo
+    INT(x / ancho) * ancho (INT de DAX redondea hacia abajo), con ancho 10, 13 o 25 letras según la semana."""
+    ancho = BIN_LETRAS_PBI[semana]
+    v = pd.to_numeric(serie, errors="coerce").dropna()
+    inicio = (np.floor(v / ancho) * ancho).astype(int)
+    g = inicio.value_counts().sort_index().rename_axis("inicio").rename("n").reset_index()
+    g["fin"] = g["inicio"] + ancho
+    return g

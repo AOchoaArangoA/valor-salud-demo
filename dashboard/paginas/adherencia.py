@@ -8,6 +8,7 @@ y se comparan con las medidas DAX en tests/test_adherencia.py.
 from __future__ import annotations
 
 import textwrap
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import numpy as np
@@ -31,7 +32,7 @@ COLOR_ADH = {"Adherente": CAT[0], "No adherente": GRIS}
 CONFIG = {"displaylogo": False, "toImageButtonOptions": {"format": "png", "scale": 2}}
 PESTANAS = {
     "1 · Población": "¿A quién tratamos?",
-    "2 · Inicio y adherencia": "¿Empiezan a tiempo y completan la dosis de carga?",
+    "2 · Adherencia y AV": "¿Completan la dosis de carga y cómo cambia la agudeza visual?",
     "3 · Resultados": "¿Mejoran la visión y la retina?",
     "4 · Adherencia y resultados": "¿Los pacientes adherentes logran mejores resultados?",
     "5 · Carga de tratamiento": "¿Cuánto tratamiento necesitan?",
@@ -43,7 +44,11 @@ def miles(x) -> str:
 
 
 def dec(x, d=1) -> str:
-    return "—" if pd.isna(x) else f"{x:,.{d}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    """Número con coma decimal, redondeado como el PBI (la mitad hacia arriba: 2,125 -> 2,13; Python daría 2,12)."""
+    if pd.isna(x):
+        return "—"
+    r = Decimal(repr(float(x))).quantize(Decimal(1).scaleb(-d), rounding=ROUND_HALF_UP)
+    return f"{r:,.{d}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 def layout(fig, titulo: str, subtitulo: str, alto: int, **kw) -> None:
@@ -176,6 +181,37 @@ def venn_antecedentes(df: pd.DataFrame) -> None:
     mostrar(fig)
 
 
+TABLA_CSS = (f"<style>.tpbi{{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;color:{TINTA}}}"
+             ".tpbi th,.tpbi td{padding:5px 10px;white-space:nowrap}.tpbi th{font-weight:600;text-align:left;vertical-align:bottom}"
+             ".tpbi td.n{text-align:right}.tpbi tr.total td{font-weight:700;border-top:1px solid #9AA4B2}"
+             ".tpbi tbody tr:nth-child(even) td{background:#F4F6F9}.tpbi td.sep,.tpbi th.sep{border-left:1px solid #9AA4B2}"
+             ".tpbi thead tr:last-child th{border-bottom:1px solid #9AA4B2}.tpbi-wrap{overflow-x:auto;margin-bottom:.8rem}"
+             ".tpbi.compacta{font-size:12.5px}.tpbi.compacta th,.tpbi.compacta td{padding:5px 6px}</style>")
+
+
+def tabla_pbi(t: pd.DataFrame, grupos, medidas, titulo_filas: str, encabezado: str) -> str:
+    """Tabla dinámica con grupos de columnas (como la matriz del PBI): fila 1 = grupos, fila 2 = medidas."""
+    h1 = f"<tr><th>{encabezado}</th>" + "".join(f"<th colspan='{len(medidas)}' class='sep'>{etq}</th>" for _, etq in grupos) + "</tr>"
+    h2 = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th class='{'sep' if i == 0 else ''}' style='text-align:right'>{m[1]}</th>"
+                                                   for _ in grupos for i, m in enumerate(medidas)) + "</tr>"
+    filas = ""
+    for fila in t.index:
+        celdas = "".join(f"<td class='n{' sep' if i == 0 else ''}'>{'' if pd.isna(t.loc[fila, (g, m)]) else f(t.loc[fila, (g, m)])}</td>"
+                         for g, _ in grupos for i, (m, _, f) in enumerate(medidas))
+        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
+    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi'><thead>{h1}{h2}</thead><tbody>{filas}</tbody></table></div>"
+
+
+def tabla_simple(t: pd.DataFrame, titulo_filas: str) -> str:
+    """Tabla de conteos (filas × columnas) con fila y columna Total; las celdas en cero quedan vacías, como en el PBI."""
+    h = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th style='text-align:right'>{c}</th>" for c in t.columns) + "</tr>"
+    filas = ""
+    for fila in t.index:
+        celdas = "".join(f"<td class='n'{' style=font-weight:700' if c == 'Total' else ''}>{miles(v) if v else ''}</td>" for c, v in t.loc[fila].items())
+        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
+    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi compacta'><thead>{h}</thead><tbody>{filas}</tbody></table></div>"
+
+
 # ============================================================================ datos
 @st.cache_data(show_spinner="Preparando el análisis de adherencia…")
 def _datos(ruta: str, marca: float, llave: bytes | None = None) -> pd.DataFrame:
@@ -301,29 +337,45 @@ if VISTA == "1 · Población":
 
 
 # ============================================================================ 2 · Inicio y adherencia
-if VISTA == "2 · Inicio y adherencia":
-    adh = A.adherencia_semanas(df)
-    cols = st.columns(3)
-    for col, (s, (pct, si, n)) in zip(cols, adh.items()):
-        col.metric(f"{L.N_ADH} · semana {s}", f"{dec(pct)} %", help=f"{miles(si)} adherentes de {miles(n)} POR evaluados")
-    st.caption("Adherente: recibió al menos 3 aplicaciones hasta la semana indicada (al menos 6 en OVR), la misma regla del proceso.")
+if VISTA == "2 · Adherencia y AV":
+    # Réplica de la hoja 3a del PBI («Variables MPR — Adherencia y Agudeza Visual»), pedida por el equipo experto (19-nov-2026)
+    adh16 = A.adherencia_semanas(df)[16]
+    k1, k2, _ = st.columns([1, 1, 2])
+    k1.metric("\\# POR Adherentes sem16", miles(adh16[1]))
+    k2.metric("% Adherencia sem16", f"{dec(adh16[0], 2)} %")
+    st.caption("Adherente: recibió al menos 3 aplicaciones hasta la semana 16 (al menos 6 en OVR). El filtro de medicamento de la barra "
+               "lateral cumple el papel del selector «Medicamento» del PBI.")
 
-    s = selector_semana("sem-adh", A.SEMANAS_ADHERENCIA, "Semana de adherencia")
-    t = A.adherencia_por_dx(df, s)
-    if t.empty:
-        sin_datos("la adherencia")
-    else:
-        fig = go.Figure(go.Bar(y=etiqueta_dx(t, "diagnostico", "n"), x=t["pct"], orientation="h", marker=dict(color=CAT[0], cornerradius=3),
-                               text=[f"{dec(p)} %" + (f" · {dec(d)} dosis en promedio" if pd.notna(d) else "") for p, d in zip(t["pct"], t["dosis"])],
-                               textposition="inside", insidetextanchor="end", textfont=dict(color="#fff", size=11),
-                               customdata=np.c_[t["adherentes"], t["n"]],
-                               hovertemplate="%{y}: %{x:.1f} % (%{customdata[0]:,.0f} de %{customdata[1]:,.0f})<extra></extra>"))
-        total = adh[s]
-        fig.add_vline(x=total[0], line=dict(color=TINTA, width=1.2, dash="dot"))
-        layout(fig, f"{L.N_ADH} a la semana {s} por diagnóstico",
-               f"% de POR adherentes y dosis promedio aplicadas hasta esa semana · línea punteada = total ({dec(total[0])} %)",
-               80 + 46 * len(t), yaxis=dict(autorange="reversed"), xaxis=dict(range=[0, 100], ticksuffix=" %"), bargap=0.35)
-        mostrar(fig)
+    st.markdown("**Adherencia a dosis de carga — semana 16, por diagnóstico**")
+    ta = A.tabla_adherencia_dx(df, 16)
+    st.markdown(tabla_pbi(ta, grupos=[("No", "No"), ("Sí", "Si"), ("Total", "Total")],
+                          medidas=[("apl", "Apl Acum<br>Sem 16", lambda x: dec(x, 2)), ("n", "# POR", miles), ("pct", "% # POR", lambda x: f"{dec(x, 2)}%")],
+                          titulo_filas="Diagnostico", encabezado="Adherencia_final_16_val"), unsafe_allow_html=True)
+
+    c1, c2 = st.columns([6, 5])
+    sem_clase = c1.selectbox("Clase AV", A.SEMANAS_RESULTADO, index=2, key="sel-clase-av",
+                             format_func=lambda s: f"{A.SEMANAS_RESULTADO.index(s) + 1}. clase_AV_sem{s}")
+    sem_letras = c2.selectbox("Selector Dif Letras", A.SEMANAS_RESULTADO, index=2, key="sel-dif-letras",
+                              format_func=lambda s: f"{A.SEMANAS_RESULTADO.index(s) + 1}. dif_lts_sem{s}")
+    c1, c2 = st.columns([6, 5])
+    with c1:
+        st.markdown("**Clase de ganancia de agudeza visual por diagnóstico (semana seleccionable)**")
+        tc = A.tabla_clase_av(df, sem_clase)
+        st.markdown(tabla_simple(tc, "Diagnostico"), unsafe_allow_html=True)
+    with c2:
+        h = A.histograma_letras_pbi(A.con_evaluacion(df)[f"dif_lts_sem{sem_letras}"], sem_letras)
+        if h.empty:
+            sin_datos("la diferencia en letras")
+        else:
+            ancho = A.BIN_LETRAS_PBI[sem_letras]
+            fig = go.Figure(go.Bar(x=h["inicio"] + ancho / 2, y=h["n"], width=ancho * 0.8, marker=dict(color=CAT[0], cornerradius=2),
+                                   customdata=np.c_[h["inicio"], h["fin"]],
+                                   hovertemplate="De %{customdata[0]} a %{customdata[1]} letras: %{y:,} POR<extra></extra>"))
+            layout(fig, "Distribución de diferencia en letras AV (semana seleccionable)",
+                   f"n = {miles(int(h['n'].sum()))} POR con AV evaluada · intervalos de {ancho} letras, como en el PBI", 300,
+                   xaxis=dict(title=f"{A.SEMANAS_RESULTADO.index(sem_letras) + 1}. dif_lts_sem{sem_letras}", zeroline=False),
+                   yaxis=dict(title="# POR Total AV"), bargap=0.1)
+            mostrar(fig)
 
     st.markdown("##### Oportunidad de inicio del tratamiento")
     col1, col2 = st.columns([3, 2])

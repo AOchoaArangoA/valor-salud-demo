@@ -102,8 +102,10 @@ TOLERANCIA_PROGRAMACION_DIAS = int(os.getenv("VLM_TOL_PROG", "10"))
 RETRASO_GRAVE_DIAS = 30            # > 30 días de retraso = "retraso grave" (misma clasificación del reporte)
 # Celda 53 del notebook pretendía completar la AV que no está en la tabla ETDRS con 85 - 50*logMAR, pero
 # `df['AV_letras'].fillna(..., inplace=True)` no surte efecto con pandas moderno (Copy-on-Write), por lo que
-# los Excel legados quedaron SIN esa imputación. True = lógica pretendida; False = reproduce los Excel legados.
-RELLENAR_AV_POR_LOGMAR = os.getenv("VLM_RELLENAR_AV", "1").strip().lower() not in ("0", "false", "no")
+# los Excel legados quedaron SIN esa imputación. True = lógica pretendida; False = reproduce los Excel legados y el PBI.
+# Por defecto False desde el 22-nov-2026: el equipo experto pidió que las cifras de AV coincidan con el PBI (hoja 3a).
+# VLM_RELLENAR_AV=1 vuelve a completar con la fórmula las AV que no están en la tabla (20/30, 20/60, 20/70...).
+RELLENAR_AV_POR_LOGMAR = os.getenv("VLM_RELLENAR_AV", "0").strip().lower() not in ("0", "false", "no")
 UMBRAL_OCT_MICRAS = 300
 UMBRAL_CLASE_AV_LETRAS = 5         # empeora < -5, mejora > 5
 

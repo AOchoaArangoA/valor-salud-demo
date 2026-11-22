@@ -35,7 +35,9 @@ INICIO_MIN, INICIO_MAX = pd.Timestamp("2020-06-01"), pd.Timestamp("2024-10-31")
 DX = [("DMREn", "H353", 0.52), ("EMD", "H360", 0.26), ("OVR", "H348", 0.13), ("MNV", "H442", 0.07), ("Desconocido/No revelado", "H360", 0.02)]
 DX_EFECTO = {"DMREn": 0.0, "EMD": -0.5, "OVR": -1.5, "MNV": 1.0, "Desconocido/No revelado": -1.0}
 MED_EFECTO = {1: 1.5, 2: 0.0, 3: 2.5, 4: -0.5}     # efecto sobre la ganancia de letras por medicamento (códigos 1-4, como el prestador base)
-DENOMINADORES = np.array([20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 2000], float)
+# Solo denominadores de la tabla ETDRS (config.SNELLEN_A_ETDRS): sin el relleno por logMAR, que viene apagado por defecto
+# como en el PBI (22-nov-2026), 20/30, 20/60 o 20/70 quedarían sin letras.
+DENOMINADORES = np.array([20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320, 400, 500, 630, 800, 2000], float)
 TIPO_DOC = "Cédula de ciudadanía"
 SEDES, SEDES_P = ["Sede 1", "Sede 2", "Sede 3"], [.5, .3, .2]   # para poder probar el filtro de sede
 

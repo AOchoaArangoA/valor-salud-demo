@@ -1,11 +1,11 @@
 {
-  "generado": "2026-11-16T20:07:06",
+  "generado": "2026-11-22T15:06:31",
   "prestador": "p2",
   "insumo": "Formulario_sintetico.xlsx",
   "costos_fuente": "maestra_costos_por_anio_DUMMY.xlsx",
   "costos_es_dummy": true,
   "ecv_fuente": "ecv_prom_dimensiones.xlsx",
-  "av_rellena_por_logmar": true,
+  "av_rellena_por_logmar": false,
   "oportunidad_inicio_max_dias": 15,
   "tolerancia_programacion_dias": 10,
   "filas_mart": 1503,
