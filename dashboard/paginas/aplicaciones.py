@@ -96,7 +96,7 @@ def barras(c: pd.DataFrame, col: str, titulo: str, eje: str) -> None:
 def treemap(serie: pd.Series, titulo: str, sufijo: str = " sem", min_pct: float = 1.5, etiqueta_pct: float = 3.0) -> None:
     """Bloques por intervalo. Los intervalos con menos de `min_pct` % se juntan en un bloque «Otras» (el detalle va en la
     ayuda al pasar el cursor) y solo los bloques de al menos `etiqueta_pct` % llevan cifra; los medianos llevan solo el nombre."""
-    v = serie.dropna().astype(int).value_counts()
+    v = serie.dropna().astype(int).map(banda_semanas).value_counts()      # la cola larga (> 16 semanas) va en bandas
     if v.empty:
         st.info(f"Sin datos para «{titulo}».")
         return
@@ -109,7 +109,7 @@ def treemap(serie: pd.Series, titulo: str, sufijo: str = " sem", min_pct: float 
     if len(chico):
         etiquetas.append(f"Otras ({len(chico)})")
         valores.append(int(chico.sum()))
-        det = ", ".join(f"{k}{sufijo} ({miles(n)})" for k, n in chico.sort_index().items())
+        det = ", ".join(f"{k}{sufijo} ({miles(n)})" for k, n in chico.items())
         ayuda.append(f"Otras: {miles(chico.sum())} dosis ({dec(100 * chico.sum() / tot, 1)} %)<br>"
                      + "<br>".join(textwrap.wrap(det, 60)))
     texto = []
@@ -148,6 +148,26 @@ def banda_dosis(d) -> str:
     return "37 o más"
 
 
+def banda_semanas(w) -> str:
+    """Semanas -> columna del mapa: 1 a 16 una por una y la cola larga en bandas."""
+    w = int(w)
+    if w <= 16:
+        return str(w)
+    for lo, hi in ((17, 20), (21, 26), (27, 39), (40, 52)):
+        if w <= hi:
+            return f"{lo}–{hi}"
+    return "> 52"
+
+
+def agrupar_semanas(m: pd.DataFrame) -> pd.DataFrame:
+    cuerpo = m.drop(columns="Total")
+    if not all(isinstance(c, (int, float, np.integer, np.floating)) for c in cuerpo.columns):
+        return m
+    orden = list(dict.fromkeys(banda_semanas(c) for c in sorted(cuerpo.columns)))
+    g = cuerpo.T.groupby([banda_semanas(c) for c in cuerpo.columns]).sum().T[orden]
+    return pd.concat([g, m[["Total"]]], axis=1)
+
+
 def agrupar_dosis(m: pd.DataFrame) -> pd.DataFrame:
     total = m.loc[["Total"]]
     cuerpo = m.drop(index="Total")
@@ -161,7 +181,7 @@ def mapa_calor(m: pd.DataFrame, titulo: str, subtitulo: str, eje_x: str, sufijo_
     if m.empty:
         st.info(f"Sin datos para «{titulo}».")
         return
-    m = agrupar_dosis(m)
+    m = agrupar_semanas(agrupar_dosis(m))
     z = m.drop(index="Total", columns="Total")
     ylab = [f"Dosis {i} ({miles(m.loc[i, 'Total'])})" for i in z.index]
     xlab = [f"{c}{sufijo_x}<br><span style='font-size:10px;color:{TINTA2}'>{miles(m.loc['Total', c])}</span>" for c in z.columns]
@@ -170,7 +190,7 @@ def mapa_calor(m: pd.DataFrame, titulo: str, subtitulo: str, eje_x: str, sufijo_
                                text=texto, texttemplate="%{text}", textfont=dict(size=10), xgap=1, ygap=1,
                                hovertemplate="%{y}<br>" + eje_x + ": %{x}<br>%{z:,}<extra></extra>"))
     layout(fig, titulo, subtitulo + f" · total {miles(m.loc['Total', 'Total'])}", 70 + 24 * len(z),
-           xaxis=dict(title=eje_x, side="bottom", type="category", tickangle=0), yaxis=dict(autorange="reversed", title=None, type="category"))
+           xaxis=dict(title=eje_x, side="bottom", type="category", tickangle=0, tickfont=dict(size=10)), yaxis=dict(autorange="reversed", title=None, type="category"))
     fig.update_layout(plot_bgcolor="#FFFFFF")
     mostrar(fig)
 
@@ -259,7 +279,7 @@ if SECCION == SECCIONES[0]:
         tarjetas([("Dosis aplicadas", miles(len(x)), "Inyecciones con fecha de aplicación en el período."),
                   ("Paciente-ojo atendidos", miles(x["pacienteojoreingreso"].nunique()), ""),
                   ("Mediana de semanas entre dosis", dec(sem.median(), 0) if len(sem) else "—", "Semanas desde la dosis anterior del mismo paciente-ojo."),
-                  ("Primeras dosis", miles(int((x["con_dosis"] == 1).sum())), "Aplicaciones con consecutivo 1 (inicio de tratamiento).")])
+                  ("Inicios de tratamiento (dosis 1)", miles(int((x["con_dosis"] == 1).sum())), "Inyecciones del período que fueron la dosis número 1 de un paciente-ojo. Se cuenta por ojo (si empieza en los dos ojos, suma 2) y un reingreso cuenta otra vez, porque su tratamiento arranca de nuevo en la dosis 1. Cambia con el período y los filtros.")])
         st.caption("Inyecciones anti-VEGF aplicadas en el período, por diagnóstico, medicamento y EAPB; distribución por número de dosis acumuladas "
                    "e intervalo real entre dosis consecutivas, para ver si los pacientes reciben el tratamiento con la frecuencia indicada.")
         c1, c2, c3 = st.columns(3)
