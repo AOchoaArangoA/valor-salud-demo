@@ -279,7 +279,7 @@ if SECCION == SECCIONES[0]:
         tarjetas([("Dosis aplicadas", miles(len(x)), "Inyecciones con fecha de aplicación en el período."),
                   ("Paciente-ojo atendidos", miles(x["pacienteojoreingreso"].nunique()), ""),
                   ("Mediana de semanas entre dosis", dec(sem.median(), 0) if len(sem) else "—", "Semanas desde la dosis anterior del mismo paciente-ojo."),
-                  ("Primeras dosis", miles(int((x["con_dosis"] == 1).sum())), "Aplicaciones con consecutivo 1 (inicio de tratamiento).")])
+                  ("Inicios de tratamiento (dosis 1)", miles(int((x["con_dosis"] == 1).sum())), "Inyecciones del período que fueron la dosis número 1 de un paciente-ojo. Se cuenta por ojo (si empieza en los dos ojos, suma 2) y un reingreso cuenta otra vez, porque su tratamiento arranca de nuevo en la dosis 1. Cambia con el período y los filtros.")])
         st.caption("Inyecciones anti-VEGF aplicadas en el período, por diagnóstico, medicamento y EAPB; distribución por número de dosis acumuladas "
                    "e intervalo real entre dosis consecutivas, para ver si los pacientes reciben el tratamiento con la frecuencia indicada.")
         c1, c2, c3 = st.columns(3)
