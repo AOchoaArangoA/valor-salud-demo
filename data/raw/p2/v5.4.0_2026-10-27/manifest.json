@@ -32,6 +32,7 @@
     "Sedes asignadas con el flujo aleatorio de sede del generador (semilla 2026 + 5), 31-oct-2026.",
     "Tratamiento previo (columnas tp_*) completado con su propio flujo aleatorio (semilla 2026 + 6), 14-nov-2026; el resto del libro no cambia.",
     "Año 2 de demostración (semilla 2026 + 8: parte de quienes dejan de inyectarse en el año 1 sigue hasta el día 728) y antecedentes con las proporciones reales por diagnóstico (semilla 2026 + 7), 16-nov-2026.",
-    "Agudeza visual solo con denominadores de la tabla ETDRS y proceso sin relleno por logMAR, como el PBI (22-nov-2026)."
+    "Agudeza visual solo con denominadores de la tabla ETDRS y proceso sin relleno por logMAR, como el PBI (22-nov-2026).",
+    "Mantenimiento después del año 2 para parte de los pacientes (semilla 2026 + 9): pacientes activos al corte, retrasos recientes y llegadas adelantadas, 26-nov-2026."
   ]
 }

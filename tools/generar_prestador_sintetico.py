@@ -135,6 +135,9 @@ def _tratamiento_previo(lb: pd.DataFrame, rng: np.random.Generator) -> pd.DataFr
 # abandone después de cada dosis del año 2. Con estos valores ~54 % de los POR con 2 años posibles tiene dosis en el año 2
 # (5,0 en promedio entre quienes siguen, de 1 a 11). Los datos reales del prestador base tienen ~21 %: esto es para demostración.
 CONTINUA_ANIO2, ABANDONO_ANIO2 = 0.95, 0.03
+# Mantenimiento después del día 728: probabilidad de seguir y de abandonar después de cada dosis (prototipo de la página
+# Seguimiento de aplicaciones: pacientes activos al corte, retrasos recientes y llegadas adelantadas).
+CONTINUA_MANTENIMIENTO, ABANDONO_MANTENIMIENTO = 0.60, 0.04
 
 # Antecedentes por diagnóstico, en proporciones tomadas de los datos reales del prestador base (dim_Paciente del PBI de
 # adherencia, nov-2026): diabetes, HTA y dislipidemia. La insulina casi no viene diligenciada en los datos reales; se
@@ -164,6 +167,7 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
     rng_s52 = np.random.default_rng(seed + 4)    # flujo aparte para la fecha de la visita a S52 añadida
     rng_sede = np.random.default_rng(seed + 5)   # flujo aparte para la sede (31-oct-2026): no altera ningún otro dato
     rng_a2 = np.random.default_rng(seed + 8)     # flujo aparte para el año 2 de demostración (16-nov-2026)
+    rng_m = np.random.default_rng(seed + 9)      # flujo aparte para el mantenimiento después del año 2 (26-nov-2026)
     pac, lb, ap, co, ay, cv, ecv = [], [], [], [], [], [], []
     ids = {"lb": 0, "ap": 0, "co": 0, "ay": 0, "cv": 0}
     dx_names, dx_cods, dx_p = zip(*DX)
@@ -357,10 +361,15 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                 fecha = filas_ap[-1]["fecha_programacion"] + pd.Timedelta(days=int(rng_a2.integers(-5, 15)))
                 tope_a2 = int(rng_a2.choice([5, 6, 8, 10, 12, 16], p=[.15, .20, .22, .18, .15, .10]))   # cada paciente se extiende distinto
                 intervalo = int(np.clip(intervalo, 5, tope_a2))
-                while (fecha - inicio).days <= 728 and fecha <= CORTE:
+                abandono, mantenimiento = False, False
+                # Mantenimiento (26-nov-2026, prototipo de Seguimiento de aplicaciones): parte de quienes terminan el año 2 sin
+                # abandonar sigue inyectándose hasta el corte del insumo. Da pacientes activos con citas próximas, en rango y con
+                # retrasos recientes, y algunas llegadas adelantadas. Flujo aleatorio propio (semilla + 9).
+                while fecha <= CORTE and ((fecha - inicio).days <= 728 or mantenimiento):
                     k += 1
+                    r_ = rng_m if mantenimiento else rng_a2     # cada fase con su flujo: el año 2 no cambia
                     t_sem = (fecha - inicio).days / 7
-                    irf, srf, hem, esp = examen(t_sem, rng_a2)
+                    irf, srf, hem, esp = examen(t_sem, r_)
                     intervalo = int(np.clip(intervalo + (2 if irf == 0 and srf == 0 else -2), 5, tope_a2))
                     planeada = fecha + pd.Timedelta(days=7 * intervalo)
                     ids["ap"] += 1
@@ -369,7 +378,7 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                                    tipo_tto="Aplicación intravítrea", con_dosis=k, fecha_aplicacion=fecha, esquema="Treat & extend",
                                    molecula=molecula, semana_extension=intervalo, fecha_programacion=planeada, medico=medico, dx_ppal=cod,
                                    dx_ppal_desc=dx, plan_pago="Plan 1"))
-                    den = letras_a_denominador(av(t_sem, rng_a2))
+                    den = letras_a_denominador(av(t_sem, r_))
                     ids["co"] += 1
                     co.append(dict(id_registro=ids["co"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
                                    numero_doc=doc, ojo=ojo, reingreso=reingreso, tipo_consulta="Retina", con_consulta=k + 1, fecha_consulta=fecha,
@@ -378,13 +387,24 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                     ids["ay"] += 1
                     ay.append(dict(id_registro=ids["ay"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
                                    numero_doc=doc, ojo=ojo, reingreso=reingreso, tipo_ayuda="OCT", con_ayuda=k + 1, fecha_ayuda=fecha, oct=round(esp),
-                                   oct_dep=int(rng_a2.random() < .05), oct_irf=irf, oct_srf=srf, oct_hemorragia=hem, oct_quistes=int(irf and rng_a2.random() < .5),
-                                   oct_hrfs=int(rng_a2.random() < .3), oct_atrofia=int(rng_a2.random() < .05 + t_sem / 600),
-                                   oct_fibrosis=int(rng_a2.random() < .04 + t_sem / 700)))
+                                   oct_dep=int(r_.random() < .05), oct_irf=irf, oct_srf=srf, oct_hemorragia=hem, oct_quistes=int(irf and r_.random() < .5),
+                                   oct_hrfs=int(r_.random() < .3), oct_atrofia=int(r_.random() < .05 + t_sem / 600),
+                                   oct_fibrosis=int(r_.random() < .04 + t_sem / 700)))
                     ultima = fecha
+                    if mantenimiento:
+                        if rng_m.random() < ABANDONO_MANTENIMIENTO:
+                            break
+                        u = rng_m.random()                      # llegada frente a la fecha programada
+                        demora = (int(rng_m.integers(-25, -10)) if u < .10 else int(rng_m.integers(-5, 8)) if u < .74 else
+                                  int(rng_m.integers(11, 31)) if u < .92 else int(rng_m.integers(31, 76)))
+                        fecha = planeada + pd.Timedelta(days=demora)
+                        continue
                     if rng_a2.random() < ABANDONO_ANIO2:
+                        abandono = True
                         break
                     fecha = planeada + pd.Timedelta(days=int(rng_a2.integers(-5, 12)))
+                    if (fecha - inicio).days > 728 and not abandono:
+                        mantenimiento = rng_m.random() < CONTINUA_MANTENIMIENTO
             fin_previo[ojo] = ultima
             inactivo = (CORTE - ultima).days > 180 or (ojo, reingreso + 1) in episodios
             lb.append(dict(id_registro=len(lb) + 1, fecha_registro=f_dx_ojo, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,

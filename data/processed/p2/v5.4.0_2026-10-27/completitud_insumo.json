@@ -1,5 +1,5 @@
 {
-  "generado": "2026-11-22T15:06:08",
+  "generado": "2026-11-26T02:11:36",
   "hojas": [
     {
       "hoja": "pacientes",
@@ -603,14 +603,14 @@
         {
           "columna": "egreso_fecha",
           "obligatoria": false,
-          "con_dato": 1393,
-          "pct": 92.7
+          "con_dato": 1249,
+          "pct": 83.1
         },
         {
           "columna": "egreso_causa",
           "obligatoria": false,
-          "con_dato": 1393,
-          "pct": 92.7
+          "con_dato": 1249,
+          "pct": 83.1
         },
         {
           "columna": "egreso_desc",
@@ -635,78 +635,78 @@
     },
     {
       "hoja": "aplicaciones",
-      "filas": 11497,
+      "filas": 13550,
       "columnas": [
         {
           "columna": "id_registro",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "fecha_registro",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "pacienteojoreingreso",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "pacienteojo",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "tipo_doc",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "numero_doc",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "ojo",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_tto_fecha",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_tto",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_tto_consec",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "reingreso",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "tipo_tto",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
@@ -718,7 +718,7 @@
         {
           "columna": "con_dosis",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
@@ -730,19 +730,19 @@
         {
           "columna": "fecha_aplicacion",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "esquema",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "molecula",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
@@ -754,31 +754,31 @@
         {
           "columna": "semana_extension",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "fecha_programacion",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "medico",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "dx_ppal",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
           "columna": "dx_ppal_desc",
           "obligatoria": true,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         },
         {
@@ -790,7 +790,7 @@
         {
           "columna": "plan_pago",
           "obligatoria": false,
-          "con_dato": 11497,
+          "con_dato": 13550,
           "pct": 100.0
         }
       ],
@@ -798,78 +798,78 @@
     },
     {
       "hoja": "consultas",
-      "filas": 15187,
+      "filas": 17240,
       "columnas": [
         {
           "columna": "id_registro",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "fecha_registro",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "pacienteojoreingreso",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "pacienteojo",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "tipo_doc",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "numero_doc",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "ojo",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_consulta_fecha",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_consulta",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_consulta_consec",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "reingreso",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "tipo_consulta",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
@@ -881,19 +881,19 @@
         {
           "columna": "con_consulta",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "fecha_consulta",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "agu_vis",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
@@ -917,19 +917,19 @@
         {
           "columna": "av_tipo",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "cod_dx_ppal",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "dx_ppal",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
@@ -947,7 +947,7 @@
         {
           "columna": "medico",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
@@ -959,50 +959,50 @@
         {
           "columna": "com_ambliopia",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "com_maculopatia",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "com_opa_med",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "com_glau_neu",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "com_evr",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "endoftalmitis",
           "obligatoria": true,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "tipo_endoftalmitis",
           "obligatoria": false,
-          "con_dato": 15187,
+          "con_dato": 17240,
           "pct": 100.0
         },
         {
           "columna": "agu_vis_num",
           "obligatoria": false,
-          "con_dato": 15043,
-          "pct": 99.1
+          "con_dato": 17096,
+          "pct": 99.2
         },
         {
           "columna": "agu_vis_con_num",
@@ -1015,72 +1015,72 @@
     },
     {
       "hoja": "ayudas",
-      "filas": 14823,
+      "filas": 16876,
       "columnas": [
         {
           "columna": "id_registro",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "fecha_registro",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "pacienteojoreingreso",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "pacienteojo",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "tipo_doc",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "numero_doc",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "ojo",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_ayuda_fecha",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_ayuda",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "pac_ojo_rei_ayuda_consec",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "tipo_ayuda",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
@@ -1092,19 +1092,19 @@
         {
           "columna": "fecha_ayuda",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "con_ayuda",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
@@ -1122,55 +1122,55 @@
         {
           "columna": "reingreso",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_dep",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_irf",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_srf",
           "obligatoria": true,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_hemorragia",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_quistes",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_hrfs",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_atrofia",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         },
         {
           "columna": "oct_fibrosis",
           "obligatoria": false,
-          "con_dato": 14823,
+          "con_dato": 16876,
           "pct": 100.0
         }
       ],
@@ -1454,8 +1454,8 @@
       "tipo": "Registros que encuentran su llave",
       "cruce": "Aplicaciones con su paciente-ojo en línea base",
       "llave": "pacienteojoreingreso",
-      "total": 11497,
-      "cumplen": 11497,
+      "total": 13550,
+      "cumplen": 13550,
       "no_cumplen": 0,
       "pct": 100.0
     },
@@ -1463,8 +1463,8 @@
       "tipo": "Registros que encuentran su llave",
       "cruce": "Consultas con su paciente-ojo en línea base",
       "llave": "pacienteojoreingreso",
-      "total": 15187,
-      "cumplen": 15187,
+      "total": 17240,
+      "cumplen": 17240,
       "no_cumplen": 0,
       "pct": 100.0
     },
@@ -1472,8 +1472,8 @@
       "tipo": "Registros que encuentran su llave",
       "cruce": "Ayudas diagnósticas con su paciente-ojo en línea base",
       "llave": "pacienteojoreingreso",
-      "total": 14823,
-      "cumplen": 14823,
+      "total": 16876,
+      "cumplen": 16876,
       "no_cumplen": 0,
       "pct": 100.0
     },
