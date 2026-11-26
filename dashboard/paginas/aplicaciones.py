@@ -93,17 +93,36 @@ def barras(c: pd.DataFrame, col: str, titulo: str, eje: str) -> None:
     mostrar(fig)
 
 
-def treemap(serie: pd.Series, titulo: str, sufijo: str = " sem") -> None:
+def treemap(serie: pd.Series, titulo: str, sufijo: str = " sem", min_pct: float = 1.5, etiqueta_pct: float = 3.0) -> None:
+    """Bloques por intervalo. Los intervalos con menos de `min_pct` % se juntan en un bloque «Otras» (el detalle va en la
+    ayuda al pasar el cursor) y solo los bloques de al menos `etiqueta_pct` % llevan cifra; los medianos llevan solo el nombre."""
     v = serie.dropna().astype(int).value_counts()
     if v.empty:
         st.info(f"Sin datos para «{titulo}».")
         return
-    tot = v.sum()
-    fig = go.Figure(go.Treemap(labels=[f"{k}{sufijo}" for k in v.index], parents=[""] * len(v), values=v.values,
-                               texttemplate="<b>%{label}</b><br>%{value:,} (%{percentRoot:.1%})", hovertemplate="%{label}: %{value:,}<extra></extra>",
-                               marker=dict(colors=[comun.rgba(CAT[0], 0.35 + 0.65 * n / v.max()) for n in v.values], line=dict(color="#fff", width=2))))
-    layout(fig, titulo, f"n = {miles(tot)} · el tamaño de cada bloque es el número de dosis", 330)
-    fig.update_layout(margin=dict(l=4, r=4, b=4))
+    tot = int(v.sum())
+    pct = 100 * v / tot
+    grande, chico = v[pct >= min_pct], v[pct < min_pct]
+    etiquetas = [f"{k}{sufijo}" for k in grande.index]
+    valores = list(grande.values)
+    ayuda = [f"{k}{sufijo}: {miles(n)} dosis ({dec(100 * n / tot, 1)} %)" for k, n in grande.items()]
+    if len(chico):
+        etiquetas.append(f"Otras ({len(chico)})")
+        valores.append(int(chico.sum()))
+        det = ", ".join(f"{k}{sufijo} ({miles(n)})" for k, n in chico.sort_index().items())
+        ayuda.append(f"Otras: {miles(chico.sum())} dosis ({dec(100 * chico.sum() / tot, 1)} %)<br>"
+                     + "<br>".join(textwrap.wrap(det, 60)))
+    texto = []
+    for e, n in zip(etiquetas, valores):
+        p_ = 100 * n / tot
+        texto.append(f"<b>{e}</b><br>{miles(n)} ({dec(p_, 1)} %)" if p_ >= etiqueta_pct or e.startswith("Otras") else f"<b>{e}</b>")
+    vmax = max(valores)
+    colores = [GRIS if e.startswith("Otras") else comun.rgba(CAT[0], 0.35 + 0.65 * n / vmax) for e, n in zip(etiquetas, valores)]
+    fig = go.Figure(go.Treemap(labels=etiquetas, parents=[""] * len(etiquetas), values=valores, text=texto, customdata=ayuda,
+                               texttemplate="%{text}", hovertemplate="%{customdata}<extra></extra>", textposition="middle center",
+                               marker=dict(colors=colores, line=dict(color="#fff", width=2)), sort=True, tiling=dict(pad=2)))
+    layout(fig, titulo, f"n = {miles(tot)} · el tamaño de cada bloque es el número de dosis · gris = intervalos con menos de {dec(min_pct, 1)} %", 330)
+    fig.update_layout(margin=dict(l=4, r=4, b=4), uniformtext=dict(minsize=9, mode="hide"))
     mostrar(fig)
 
 
