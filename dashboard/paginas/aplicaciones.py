@@ -348,13 +348,14 @@ if VISTA == "4 · Alertas y gestión":
                f"faltan más de {VENTANA} días. % en rango sobre evaluados: {dec(k['pct_en_rango'], 1)} %.")
     estados = [LA.RETRASO, LA.EN_RANGO, LA.FUTURA, LA.SIN_FECHA]
     est = st.segmented_control("Lista", estados, default=LA.RETRASO, key="ap-estado", format_func=lambda e: LA.etiqueta_estado(e, VENTANA)) or LA.RETRASO
-    sub = al[al["estado"] == est].sort_values("dias", ascending=False)
+    sub = al[al["estado"] == est].sort_values("dias", key=lambda d: d.abs())      # primero lo más cercano a la fecha de corte
     t = tabla_alertas(sub)
+    st.caption("Ordenado de lo más reciente a lo más antiguo: arriba, los retrasos que todavía se pueden gestionar.")
     st.dataframe(t, hide_index=True, width="stretch", height=330)
     descarga(f"alertas_{est.lower().replace(' ', '_')}", t, "dl-alertas")
 
     st.markdown("##### Registrar gestión de un incumplimiento")
-    retraso = al[al["estado"] == LA.RETRASO].sort_values("dias", ascending=False)
+    retraso = al[al["estado"] == LA.RETRASO].sort_values("dias")                   # primero los retrasos más recientes (gestionables)
     if retraso.empty:
         st.info("No hay paciente-ojo con retraso para gestionar con los filtros actuales.")
     else:
