@@ -69,7 +69,7 @@ with t_form:
     rep = completitud.leer(corrida["ruta"])
     if rep is None:
         st.info("Esta corrida se procesó antes de que existiera el reporte del formulario, así que no lo trae. Se genera "
-                "automáticamente en cada ejecución nueva del pipeline: elija, por ejemplo, una corrida del prestador PRUEBA.")
+                "automáticamente en cada ejecución nueva del pipeline: vuelva a procesar el formulario desde «Pipeline de datos».")
     else:
         resumen, detalle = [], []
         for h in rep["hojas"]:
