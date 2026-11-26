@@ -57,6 +57,23 @@ class TestAdherencia(unittest.TestCase):
                 self.assertEqual(problemas(at), [])
 
 
+class TestSeguimientoAplicaciones(unittest.TestCase):
+    PESTANAS = ["1 · Dosis aplicadas", "2 · Dosis programadas", "3 · Cumplimiento", "4 · Alertas y gestión", "5 · Reporte de alertas",
+                "6 · Visor de pacientes"]
+
+    def test_cada_pestana(self):
+        for p in self.PESTANAS:
+            for extra in ({}, {"ap-dx": []}, {"ver-identificacion": True}):
+                with self.subTest(pestana=p, estado=extra):
+                    at = abrir("paginas/aplicaciones.py", **{"vista-apl": p, **extra})
+                    self.assertEqual(problemas(at), [])
+
+    def test_graficos_en_las_pestanas_del_pbi(self):
+        for p in self.PESTANAS[:3]:
+            with self.subTest(pestana=p):
+                self.assertGreaterEqual(len(abrir("paginas/aplicaciones.py", **{"vista-apl": p}).get("plotly_chart")), 4)
+
+
 class TestTablero(unittest.TestCase):
     def test_cada_nivel(self):
         for n in NIVELES:

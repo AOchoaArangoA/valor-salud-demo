@@ -3,6 +3,7 @@ corrida de datos, los filtros comunes (diagnóstico, medicamento, sede, EAPB) y 
 from __future__ import annotations
 
 import textwrap
+from decimal import ROUND_HALF_UP, Decimal
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -199,3 +200,76 @@ def filtros_comunes(mart: pd.DataFrame) -> pd.Series:
             todas = sorted(valores.unique())
             mascara &= valores.isin(_multiselect(nombre, todas, f"f-{col}", todas))
     return mascara
+
+
+# ============================================================================ números y tablas con formato del PBI
+TINTA = "#1B2430"
+
+
+def miles(x) -> str:
+    return f"{int(x):,}".replace(",", ".")
+
+
+def dec(x, d=1) -> str:
+    """Número con coma decimal, redondeado como el PBI (la mitad hacia arriba: 2,125 -> 2,13; Python daría 2,12)."""
+    if pd.isna(x):
+        return "—"
+    r = Decimal(repr(float(x))).quantize(Decimal(1).scaleb(-d), rounding=ROUND_HALF_UP)
+    return f"{r:,.{d}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+TABLA_CSS = (f"<style>.tpbi{{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;color:{TINTA}}}"
+             ".tpbi th,.tpbi td{padding:5px 10px;white-space:nowrap}.tpbi th{font-weight:600;text-align:left;vertical-align:bottom}"
+             ".tpbi td.n{text-align:right}.tpbi tr.total td{font-weight:700;border-top:1px solid #9AA4B2}"
+             ".tpbi tbody tr:nth-child(even) td{background:#F4F6F9}.tpbi td.sep,.tpbi th.sep{border-left:1px solid #9AA4B2}"
+             ".tpbi thead tr:last-child th{border-bottom:1px solid #9AA4B2}.tpbi-wrap{overflow-x:auto;margin-bottom:.8rem}"
+             ".tpbi.compacta{font-size:12.5px}.tpbi.compacta th,.tpbi.compacta td{padding:5px 6px}</style>")
+
+
+def tabla_pbi(t: pd.DataFrame, grupos, medidas, titulo_filas: str, encabezado: str) -> str:
+    """Tabla dinámica con grupos de columnas (como la matriz del PBI): fila 1 = grupos, fila 2 = medidas."""
+    h1 = f"<tr><th>{encabezado}</th>" + "".join(f"<th colspan='{len(medidas)}' class='sep'>{etq}</th>" for _, etq in grupos) + "</tr>"
+    h2 = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th class='{'sep' if i == 0 else ''}' style='text-align:right'>{m[1]}</th>"
+                                                   for _ in grupos for i, m in enumerate(medidas)) + "</tr>"
+    filas = ""
+    for fila in t.index:
+        celdas = "".join(f"<td class='n{' sep' if i == 0 else ''}'>{'' if pd.isna(t.loc[fila, (g, m)]) else f(t.loc[fila, (g, m)])}</td>"
+                         for g, _ in grupos for i, (m, _, f) in enumerate(medidas))
+        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
+    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi'><thead>{h1}{h2}</thead><tbody>{filas}</tbody></table></div>"
+
+
+def tabla_simple(t: pd.DataFrame, titulo_filas: str) -> str:
+    """Tabla de conteos (filas × columnas) con fila y columna Total; las celdas en cero quedan vacías, como en el PBI."""
+    h = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th style='text-align:right'>{c}</th>" for c in t.columns) + "</tr>"
+    filas = ""
+    for fila in t.index:
+        celdas = "".join(f"<td class='n'{' style=font-weight:700' if c == 'Total' else ''}>{miles(v) if v else ''}</td>" for c, v in t.loc[fila].items())
+        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
+    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi compacta'><thead>{h}</thead><tbody>{filas}</tbody></table></div>"
+
+
+# ============================================================================ datos de identificación
+def identificacion_visible(meta: Dict, clave_widget: str = "ver-identificacion") -> bool:
+    """Por defecto solo se ve el código paciente-ojo. La casilla «Mostrar nombres y documento» los muestra: en una corrida
+    con datos sintéticos, sin más; con datos reales, solo con la clave VLM_PIN_IDENTIFICACION (sin clave configurada, no)."""
+    from pipeline import config
+    sintetico = bool(meta.get("sintetico") or meta.get("es_demo"))
+    if not st.sidebar.checkbox("Mostrar nombres y documento", key=clave_widget,
+                               help="Por defecto solo se muestra el código paciente-ojo reingreso."):
+        return False
+    if sintetico:
+        st.sidebar.caption("Datos sintéticos: nombres de ejemplo, sin personas reales.")
+        return True
+    if not config.PIN_IDENTIFICACION:
+        st.sidebar.warning("Para ver nombres y documentos con datos reales hay que configurar la clave VLM_PIN_IDENTIFICACION.")
+        return False
+    if st.session_state.get("_pin_id_ok"):
+        return True
+    pin = st.sidebar.text_input("Clave para ver identificación", type="password", key="pin-identificacion")
+    if pin and pin == config.PIN_IDENTIFICACION:
+        st.session_state["_pin_id_ok"] = True
+        return True
+    if pin:
+        st.sidebar.error("Clave incorrecta.")
+    return False

@@ -15,3 +15,6 @@ data/processed/*
 !data/processed/prueba/
 # Salida del generador sintético sin --registrar (es la misma entrega que data/raw/p2/)
 data/reference/sintetico/
+
+# Gestión de incumplimientos registrada en la app (datos de pacientes): nunca al repositorio
+data/gestion/

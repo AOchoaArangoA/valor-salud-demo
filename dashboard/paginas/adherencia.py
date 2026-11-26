@@ -8,7 +8,6 @@ y se comparan con las medidas DAX en tests/test_adherencia.py.
 from __future__ import annotations
 
 import textwrap
-from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import numpy as np
@@ -39,16 +38,11 @@ PESTANAS = {
 }
 
 
-def miles(x) -> str:
-    return f"{int(x):,}".replace(",", ".")
 
 
-def dec(x, d=1) -> str:
-    """Número con coma decimal, redondeado como el PBI (la mitad hacia arriba: 2,125 -> 2,13; Python daría 2,12)."""
-    if pd.isna(x):
-        return "—"
-    r = Decimal(repr(float(x))).quantize(Decimal(1).scaleb(-d), rounding=ROUND_HALF_UP)
-    return f"{r:,.{d}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+miles, dec = comun.miles, comun.dec
+tabla_pbi, tabla_simple = comun.tabla_pbi, comun.tabla_simple
 
 
 def layout(fig, titulo: str, subtitulo: str, alto: int, **kw) -> None:
@@ -179,37 +173,6 @@ def venn_antecedentes(df: pd.DataFrame) -> None:
            xaxis=dict(visible=False, range=[0, 1]), yaxis=dict(visible=False, range=[0.02, 0.98], scaleanchor="x", scaleratio=1))
     fig.update_layout(plot_bgcolor="rgba(0,0,0,0)")
     mostrar(fig)
-
-
-TABLA_CSS = (f"<style>.tpbi{{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;color:{TINTA}}}"
-             ".tpbi th,.tpbi td{padding:5px 10px;white-space:nowrap}.tpbi th{font-weight:600;text-align:left;vertical-align:bottom}"
-             ".tpbi td.n{text-align:right}.tpbi tr.total td{font-weight:700;border-top:1px solid #9AA4B2}"
-             ".tpbi tbody tr:nth-child(even) td{background:#F4F6F9}.tpbi td.sep,.tpbi th.sep{border-left:1px solid #9AA4B2}"
-             ".tpbi thead tr:last-child th{border-bottom:1px solid #9AA4B2}.tpbi-wrap{overflow-x:auto;margin-bottom:.8rem}"
-             ".tpbi.compacta{font-size:12.5px}.tpbi.compacta th,.tpbi.compacta td{padding:5px 6px}</style>")
-
-
-def tabla_pbi(t: pd.DataFrame, grupos, medidas, titulo_filas: str, encabezado: str) -> str:
-    """Tabla dinámica con grupos de columnas (como la matriz del PBI): fila 1 = grupos, fila 2 = medidas."""
-    h1 = f"<tr><th>{encabezado}</th>" + "".join(f"<th colspan='{len(medidas)}' class='sep'>{etq}</th>" for _, etq in grupos) + "</tr>"
-    h2 = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th class='{'sep' if i == 0 else ''}' style='text-align:right'>{m[1]}</th>"
-                                                   for _ in grupos for i, m in enumerate(medidas)) + "</tr>"
-    filas = ""
-    for fila in t.index:
-        celdas = "".join(f"<td class='n{' sep' if i == 0 else ''}'>{'' if pd.isna(t.loc[fila, (g, m)]) else f(t.loc[fila, (g, m)])}</td>"
-                         for g, _ in grupos for i, (m, _, f) in enumerate(medidas))
-        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
-    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi'><thead>{h1}{h2}</thead><tbody>{filas}</tbody></table></div>"
-
-
-def tabla_simple(t: pd.DataFrame, titulo_filas: str) -> str:
-    """Tabla de conteos (filas × columnas) con fila y columna Total; las celdas en cero quedan vacías, como en el PBI."""
-    h = f"<tr><th>{titulo_filas}</th>" + "".join(f"<th style='text-align:right'>{c}</th>" for c in t.columns) + "</tr>"
-    filas = ""
-    for fila in t.index:
-        celdas = "".join(f"<td class='n'{' style=font-weight:700' if c == 'Total' else ''}>{miles(v) if v else ''}</td>" for c, v in t.loc[fila].items())
-        filas += f"<tr class='{'total' if fila == 'Total' else ''}'><td>{fila}</td>{celdas}</tr>"
-    return f"{TABLA_CSS}<div class='tpbi-wrap'><table class='tpbi compacta'><thead>{h}</thead><tbody>{filas}</tbody></table></div>"
 
 
 # ============================================================================ datos

@@ -46,6 +46,9 @@ OUTPUT_DIR: Path = _ruta("VLM_OUTPUT_DIR", DATA_ROOT / "processed")
 DUMMY_COSTOS_PATH: Path = ROOT / "data" / "reference" / "maestra_costos_por_anio_DUMMY.xlsx"
 # Si se define, quien cargue un insumo debe escribirlo (control mínimo, no es seguridad fuerte)
 UPLOAD_PIN: str = os.getenv("VLM_UPLOAD_PIN", "")
+# Clave para ver nombres y documentos en las listas operativas (Seguimiento de aplicaciones). Vacía = no se muestran
+# con datos reales (con datos sintéticos siempre se pueden ver).
+PIN_IDENTIFICACION: str = os.getenv("VLM_PIN_IDENTIFICACION", "")
 # Orden en que el tablero ofrece los prestadores: el primero es la base (la que se abre por defecto). Los demás, en este orden;
 # los que no estén en la lista van después, de la carga más reciente a la más antigua.
 PRESTADORES_ORDEN = [x.strip().lower() for x in os.getenv("VLM_PRESTADORES_ORDEN", "p1,p2").split(",") if x.strip()]
