@@ -58,7 +58,7 @@ class TestAdherencia(unittest.TestCase):
 
 
 class TestSeguimientoAplicaciones(unittest.TestCase):
-    SECCIONES = ["A · Reporte de aplicaciones (Power BI)", "B · Alertas de aplicaciones (Excel)"]
+    SECCIONES = ["A · Reporte de aplicaciones", "B · Alertas de aplicaciones"]
     PBI = ["1 · Dosis aplicadas", "2 · Dosis programadas", "3 · Cumplimiento", "4 · Visor de pacientes"]
     EXCEL = ["1 · Programación", "2 · Cumplen", "3 · No cumplen y gestión", "4 · Reportes", "5 · Gestión y causas"]
 

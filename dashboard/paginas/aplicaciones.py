@@ -29,7 +29,7 @@ miles, dec = comun.miles, comun.dec
 COLOR_CLASE = {"1. Muy adelantado": "#8E6CC0", "2. Adelantado": "#7FA9EC", "3. Exacto": "#4C9A2A", "4. Retraso leve": "#E0A100",
                "5. Retraso moderado": "#D26E00", "6. Retraso grave": "#C0392B"}
 COLOR_ESTADO = {LA.EN_RANGO: "#4C9A2A", LA.RETRASO: "#C0392B", LA.FUTURA: "#1F5FBF", LA.SIN_FECHA: GRIS}
-SECCIONES = ["A · Reporte de aplicaciones (Power BI)", "B · Alertas de aplicaciones (Excel)"]
+SECCIONES = ["A · Reporte de aplicaciones", "B · Alertas de aplicaciones"]
 PESTANAS_PBI = {
     "1 · Dosis aplicadas": "¿Cuántas inyecciones se aplicaron en el período?",
     "2 · Dosis programadas": "¿Cuántas citas se programaron en el período?",
