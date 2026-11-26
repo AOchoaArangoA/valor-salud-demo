@@ -58,20 +58,29 @@ class TestAdherencia(unittest.TestCase):
 
 
 class TestSeguimientoAplicaciones(unittest.TestCase):
-    PESTANAS = ["1 · Dosis aplicadas", "2 · Dosis programadas", "3 · Cumplimiento", "4 · Alertas y gestión", "5 · Reporte de alertas",
-                "6 · Visor de pacientes"]
+    SECCIONES = ["A · Reporte de aplicaciones (Power BI)", "B · Alertas de aplicaciones (Excel)"]
+    PBI = ["1 · Dosis aplicadas", "2 · Dosis programadas", "3 · Cumplimiento", "4 · Visor de pacientes"]
+    EXCEL = ["1 · Programación", "2 · Cumplen", "3 · No cumplen y gestión", "4 · Reportes", "5 · Gestión y causas"]
 
-    def test_cada_pestana(self):
-        for p in self.PESTANAS:
+    def test_cada_pestana_del_pbi(self):
+        for p in self.PBI:
             for extra in ({}, {"ap-dx": []}, {"ver-identificacion": True}):
                 with self.subTest(pestana=p, estado=extra):
-                    at = abrir("paginas/aplicaciones.py", **{"vista-apl": p, **extra})
+                    at = abrir("paginas/aplicaciones.py", **{"apl-seccion": self.SECCIONES[0], "vista-apl": p, **extra})
+                    self.assertEqual(problemas(at), [])
+
+    def test_cada_hoja_del_excel(self):
+        for p in self.EXCEL:
+            for extra in ({}, {"ap-egreso": False}, {"ver-identificacion": True}):
+                with self.subTest(hoja=p, estado=extra):
+                    at = abrir("paginas/aplicaciones.py", **{"apl-seccion": self.SECCIONES[1], "vista-alertas": p, **extra})
                     self.assertEqual(problemas(at), [])
 
     def test_graficos_en_las_pestanas_del_pbi(self):
-        for p in self.PESTANAS[:3]:
+        for p in self.PBI[:3]:
             with self.subTest(pestana=p):
-                self.assertGreaterEqual(len(abrir("paginas/aplicaciones.py", **{"vista-apl": p}).get("plotly_chart")), 4)
+                at = abrir("paginas/aplicaciones.py", **{"apl-seccion": self.SECCIONES[0], "vista-apl": p})
+                self.assertGreaterEqual(len(at.get("plotly_chart")), 5)
 
 
 class TestTablero(unittest.TestCase):
