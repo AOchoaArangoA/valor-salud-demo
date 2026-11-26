@@ -137,7 +137,14 @@ def _tratamiento_previo(lb: pd.DataFrame, rng: np.random.Generator) -> pd.DataFr
 CONTINUA_ANIO2, ABANDONO_ANIO2 = 0.95, 0.03
 # Mantenimiento después del día 728: probabilidad de seguir y de abandonar después de cada dosis (prototipo de la página
 # Seguimiento de aplicaciones: pacientes activos al corte, retrasos recientes y llegadas adelantadas).
-CONTINUA_MANTENIMIENTO, ABANDONO_MANTENIMIENTO = 0.60, 0.04
+CONTINUA_MANTENIMIENTO, ABANDONO_MANTENIMIENTO = 0.35, 0.12   # 27-nov-2026: antes 0.60 / 0.04 (demasiadas dosis 13 o más)
+# Cohorte reciente (27-nov-2026): pacientes que inician tratamiento después de INICIO_MAX, para que en el último año haya
+# dosis de carga (1 a 3) como en un prestador real y la distribución por consecutivo se centre en la tercera dosis.
+N_RECIENTES = 520
+RECIENTE_MIN, RECIENTE_MAX = pd.Timestamp("2024-11-01"), pd.Timestamp("2026-07-15")
+# Pausas en el tratamiento (27-nov-2026): con esta probabilidad por dosis el paciente se demora mucho más de lo programado
+# (mediana ~12 semanas extra, cola hasta ~1 año): da la cola pesada de semanas entre dosis que se ve en los datos reales.
+P_PAUSA = 0.07
 
 # Antecedentes por diagnóstico, en proporciones tomadas de los datos reales del prestador base (dim_Paciente del PBI de
 # adherencia, nov-2026): diabetes, HTA y dislipidemia. La insulina casi no viene diligenciada en los datos reales; se
@@ -168,18 +175,28 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
     rng_sede = np.random.default_rng(seed + 5)   # flujo aparte para la sede (31-oct-2026): no altera ningún otro dato
     rng_a2 = np.random.default_rng(seed + 8)     # flujo aparte para el año 2 de demostración (16-nov-2026)
     rng_m = np.random.default_rng(seed + 9)      # flujo aparte para el mantenimiento después del año 2 (26-nov-2026)
+    rng_rec = np.random.default_rng(seed + 10)   # flujo de la cohorte reciente (27-nov-2026): los primeros pacientes no cambian de flujo
+    rng_pausa = np.random.default_rng(seed + 11) # flujo de las pausas en el tratamiento (27-nov-2026)
+
+    def pausa() -> int:
+        """Días extra de demora: casi siempre 0; a veces una pausa larga (cola pesada)."""
+        return int(7 * min(rng_pausa.lognormal(np.log(12), 0.55), 52)) if rng_pausa.random() < P_PAUSA else 0
     pac, lb, ap, co, ay, cv, ecv = [], [], [], [], [], [], []
     ids = {"lb": 0, "ap": 0, "co": 0, "ay": 0, "cv": 0}
     dx_names, dx_cods, dx_p = zip(*DX)
     medicos = [f"Médico {i}" for i in range(1, 7)]
     eapbs = ["EAPB A", "EAPB B", "EAPB C", "EAPB D", "EAPB E"]
 
-    for i in range(n_pacientes):
+    for i in range(n_pacientes + N_RECIENTES):
+        reciente = i >= n_pacientes
+        if i == n_pacientes:
+            rng = rng_rec                                     # la cohorte reciente usa su propio flujo
         doc = 9_000_001 + i
         edad = int(np.clip(rng.normal(66, 9), 38, 92))
         sexo = "Femenino" if rng.random() < 0.55 else "Masculino"
         dx_pac = rng.choice(len(DX), p=dx_p)
-        f_dx = INICIO_MIN + pd.Timedelta(days=int(rng.integers(0, (INICIO_MAX - INICIO_MIN).days)))
+        f_ini, f_fin = (RECIENTE_MIN, RECIENTE_MAX) if reciente else (INICIO_MIN, INICIO_MAX)
+        f_dx = f_ini + pd.Timedelta(days=int(rng.integers(0, (f_fin - f_ini).days)))
         pac.append(dict(id_paciente=i + 1, fecha_dilig=f_dx, tipo_doc=TIPO_DOC, numero_doc=doc, nombres="Sintético", apellidos=f"Paciente {i + 1:04d}",
                         fecha_nac=f_dx - pd.Timedelta(days=edad * 365), edad=edad, sexo=sexo, peso=round(rng.normal(74, 12), 1),
                         talla=round(rng.normal(165, 9), 1), imc=round(rng.normal(27, 4), 1), eapb=rng.choice(eapbs), regimen="Contributivo",
@@ -282,7 +299,7 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                 planeada = fecha + pd.Timedelta(days=7 * intervalo)
                 u = rng.random()
                 demora = 0 if u < .62 else (int(rng.integers(-7, 8)) if u < .78 else (int(rng.integers(11, 41)) if u < .95 else int(rng.integers(41, 91))))
-                proxima = planeada + pd.Timedelta(days=demora)
+                proxima = planeada + pd.Timedelta(days=demora + pausa())
                 ids["ap"] += 1
                 filas_ap.append(dict(id_registro=ids["ap"], fecha_registro=fecha, pacienteojoreingreso=clave, pacienteojo=f"{doc}{ojo}", tipo_doc=TIPO_DOC,
                                      numero_doc=doc, ojo=ojo, pac_ojo_rei_tto=f"{clave}Aplicación intravítrea", reingreso=reingreso,
@@ -397,12 +414,12 @@ def construir(seed: int = 2026, n_pacientes: int = 900) -> Dict[str, pd.DataFram
                         u = rng_m.random()                      # llegada frente a la fecha programada
                         demora = (int(rng_m.integers(-25, -10)) if u < .10 else int(rng_m.integers(-5, 8)) if u < .74 else
                                   int(rng_m.integers(11, 31)) if u < .92 else int(rng_m.integers(31, 76)))
-                        fecha = planeada + pd.Timedelta(days=demora)
+                        fecha = planeada + pd.Timedelta(days=demora + pausa())
                         continue
                     if rng_a2.random() < ABANDONO_ANIO2:
                         abandono = True
                         break
-                    fecha = planeada + pd.Timedelta(days=int(rng_a2.integers(-5, 12)))
+                    fecha = planeada + pd.Timedelta(days=int(rng_a2.integers(-5, 12)) + pausa())
                     if (fecha - inicio).days > 728 and not abandono:
                         mantenimiento = rng_m.random() < CONTINUA_MANTENIMIENTO
             fin_previo[ojo] = ultima
