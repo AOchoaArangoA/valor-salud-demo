@@ -34,11 +34,6 @@ def _aplicaciones(ruta: str, marca: float, llave: bytes | None = None):
 # ---- corrida de datos (selector compartido por todas las páginas)
 _CORRIDA, MART, META, LLAVE = comun.elegir_corrida()
 
-
-@st.cache_data(show_spinner=False)
-def _periodo(ruta: str, marca: float, llave: bytes | None = None):
-    return L.periodo_informacion(Path(ruta), llave)
-
 st.sidebar.markdown("---")
 
 APL_TODAS = _aplicaciones(str(_CORRIDA["ruta"]), (_CORRIDA["ruta"] / "metadata.json").stat().st_mtime, LLAVE)
@@ -575,15 +570,6 @@ VISTA = st.segmented_control("Nivel de gestión", SECCIONES, default=SECCIONES[0
 # ---------------------------------------------------------------- 1. Visión ejecutiva
 if VISTA == SECCIONES[0]:
     encabezado(1, "Visión ejecutiva", "¿Estamos generando valor?")
-    _per = _periodo(str(_CORRIDA["ruta"]), (_CORRIDA["ruta"] / "metadata.json").stat().st_mtime, LLAVE)
-    if _per["desde"] is not None:
-        _corte = str(META.get("entrega", "")).rsplit("_", 1)[-1]
-        st.markdown(
-            f'<div class="periodo">📅 <b>Período de la información:</b> del <b>{comun.fecha(_per["desde"], hora=False)}</b> al '
-            f'<b>{comun.fecha(_per["hasta"], hora=False)}</b> <span>(primera y última aplicación o visita registrada en el formulario)</span>'
-            f'<br><span>Formulario recibido el {comun.fecha(_corte, hora=False) if _corte[:2] == "20" else "—"} · procesado el '
-            f'{comun.fecha(META.get("generado"))} · es informativo: los filtros no cambian este período.</span></div>',
-            unsafe_allow_html=True)
     sexo = df["sexo"].fillna("Sin dato")
     sexos = [x for x in ("Femenino", "Masculino", "Sin dato") if x in set(sexo)]
     def _cuenta(col):
