@@ -30,8 +30,8 @@ ESTILOS = """<style>
     .nivel h3 {margin:0; color:var(--c);} .nivel p {margin:0; color:#5B6675;}
     .nd {color:#8A94A3; font-style:italic;}
     .dxn {display:inline-block; margin-right:22px; color:#33415C;} .dxn b {color:#1B2430;}
-    .periodo {background:#F1F5FB; border:1px solid #D9E2F0; border-radius:8px; padding:8px 14px; margin:0 0 .8rem 0; color:#1B2430; font-size:.92rem;}
-    .periodo span {color:#5B6675; font-size:.85rem;}
+    .periodo-lat {font-size:.8rem; line-height:1.35; margin:0 0 .35rem 0; cursor:help;}
+    .periodo-lat span {display:block; color:#5B6675;} .periodo-lat b {display:block; color:#1B2430; white-space:nowrap;}
     .flujo {display:flex; align-items:stretch; gap:6px; margin:.4rem 0 1rem 0;}
     .etapa {flex:1; background:#fff; border:1px solid #E3E7ED; border-radius:12px; padding:10px 12px; text-align:center;}
     .etapa .num {color:#8A94A3; font-size:.75rem;} .etapa .tit {font-weight:700; letter-spacing:.04em; font-size:.8rem; color:#1B2430;}
@@ -65,12 +65,50 @@ def ultima_actualizacion(corridas: Optional[List[Dict]] = None) -> Optional[Dict
     return max(candidatos, key=lambda c: str(c["cuando"])) if candidatos else None
 
 
+@st.cache_data(show_spinner=False)
+def _periodo(ruta: str, marca: float, llave: Optional[bytes] = None) -> Dict:
+    return L.periodo_informacion(Path(ruta), llave)
+
+
+def periodo_corrida() -> Optional[Dict]:
+    """Primera y última fecha con información de la corrida que se está viendo (la elegida o, si aún no hay elección, la más
+    reciente). None si no se puede leer (por ejemplo, datos cifrados sin la clave)."""
+    corridas = L.listar_corridas()
+    if not corridas:
+        return None
+    c = next((x for x in corridas if str(x["ruta"]) == st.session_state.get("corrida_ruta")), corridas[0])
+    try:
+        p = _periodo(str(c["ruta"]), (c["ruta"] / "metadata.json").stat().st_mtime, st.session_state.get("llave_datos"))
+    except (OSError, ValueError):
+        return None
+    return p if p.get("desde") is not None else None
+
+
+_HUECO_PERIODO = None   # lugar del período en la barra lateral (se vuelve a llenar cuando la página elige la corrida)
+
+
+def mostrar_periodo() -> None:
+    if _HUECO_PERIODO is None:
+        return
+    p = periodo_corrida()
+    if p is None:
+        _HUECO_PERIODO.empty()
+        return
+    ayuda = ("Primera y última aplicación o visita registrada en el formulario de la corrida elegida. "
+             "Es informativo: los filtros no lo cambian.")
+    _HUECO_PERIODO.markdown(f'<div class="periodo-lat" title="{ayuda}"><span>📅 Período de la información</span>'
+                            f'<b>{fecha(p["desde"], hora=False)} – {fecha(p["hasta"], hora=False)}</b></div>', unsafe_allow_html=True)
+
+
 def aviso_actualizacion() -> None:
-    """Va en la barra lateral de todas las páginas."""
+    """Va arriba en la barra lateral de todas las páginas, debajo del menú: período de la información y última actualización."""
     u = ultima_actualizacion()
     if u is None:
         st.sidebar.caption("Sin datos procesados todavía.")
         return
+    global _HUECO_PERIODO
+    _HUECO_PERIODO = st.sidebar.empty()
+    mostrar_periodo()
     detalle = " · ".join(x for x in (u["prestador"], f"v{u['version']}" if u.get("version") else "", u.get("por") or "") if x)
     st.sidebar.caption(f"Última actualización de datos: **{fecha(u['cuando'])}**" + (f"  \n{detalle}" if detalle else ""))
 
@@ -153,6 +191,7 @@ def elegir_corrida() -> Tuple[Dict, pd.DataFrame, Dict, Optional[bytes]]:
                                              help="Cada carga queda guardada con su prestador y versión; elija cuál ver (por defecto, la más reciente)."))
     corrida = corridas[i]
     st.session_state["corrida_ruta"] = str(corrida["ruta"])
+    mostrar_periodo()
     llave = st.session_state.get("llave_datos") or (seguridad.llave_de_entorno() if seguridad.hay_cifrado() else None)
     if str(corrida["ruta"]) in cifradas and llave is None:
         pantalla_clave()
