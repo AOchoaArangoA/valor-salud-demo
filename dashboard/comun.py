@@ -30,6 +30,8 @@ ESTILOS = """<style>
     .nivel h3 {margin:0; color:var(--c);} .nivel p {margin:0; color:#5B6675;}
     .nd {color:#8A94A3; font-style:italic;}
     .dxn {display:inline-block; margin-right:22px; color:#33415C;} .dxn b {color:#1B2430;}
+    .periodo {background:#F1F5FB; border:1px solid #D9E2F0; border-radius:8px; padding:8px 14px; margin:0 0 .8rem 0; color:#1B2430; font-size:.92rem;}
+    .periodo span {color:#5B6675; font-size:.85rem;}
     .flujo {display:flex; align-items:stretch; gap:6px; margin:.4rem 0 1rem 0;}
     .etapa {flex:1; background:#fff; border:1px solid #E3E7ED; border-radius:12px; padding:10px 12px; text-align:center;}
     .etapa .num {color:#8A94A3; font-size:.75rem;} .etapa .tit {font-weight:700; letter-spacing:.04em; font-size:.8rem; color:#1B2430;}
