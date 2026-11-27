@@ -43,7 +43,7 @@ def _resultados(corrida: dict, llave) -> None:
     if dq:
         st.markdown("##### Indicadores que dependen de campos opcionales")
         st.dataframe(pd.DataFrame([
-            {"Indicador": "Anatomía sin líquido (retina seca) y respondedor", "Evaluable": "Sí" if dq.get("retina_seca_evaluable") else "No",
+            {"Indicador": "Retina seca y respondedor", "Evaluable": "Sí" if dq.get("retina_seca_evaluable") else "No",
              "Dato que lo sostiene": f"OCT con líquido subretiniano: {dq.get('oct_srf_completo_pct', '—')} % con dato"},
             {"Indicador": "Cumplimiento de la fecha programada", "Evaluable": "Sí" if dq.get("cumplimiento_programacion_evaluable") else "No",
              "Dato que lo sostiene": f"Fecha programada: {dq.get('fecha_programacion_completa_pct', '—')} % con dato"},

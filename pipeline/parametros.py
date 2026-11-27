@@ -24,7 +24,7 @@ _FILAS = [
      "Inyecciones recibidas en cada año de exposición al tratamiento (año 1 hasta la semana 52; año 2 entre la semana 52 y la 104)."),
     ("extension", "Extensión última dosis", "semanas entre la penúltima y la última dosis (S52 / S104)", None, "semanas", "por definir",
      "Intervalo entre las dos últimas aplicaciones dentro de la ventana de cada semana."),
-    ("seca", "Anatomía sin líquido en OCT", "sin líquido intra ni subretiniano en S52 / S104",
+    ("seca", "Retina seca", "sin líquido intra ni subretiniano en OCT, S52 / S104",
      META_PCT_PROVISIONAL, "%", "provisional", "% de paciente-ojo reingreso con OCT sin líquido a la semana indicada."),
     ("av_umbral", "Mejora de agudeza visual", f"> +{config.UMBRAL_CLASE_AV_LETRAS} letras frente a la línea base", None, "letras", "vigente",
      "Cambio de letras ETDRS (85 − 50 × logMAR) respecto a la AV inicial."),

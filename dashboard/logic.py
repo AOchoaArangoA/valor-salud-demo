@@ -19,11 +19,11 @@ SEMANAS = [0, 12, 16, 20, 52, 104]
 # Semáforo de cumplimiento (% ): verde >= 85, ámbar >= 70, rojo < 70
 UMBRAL_VERDE, UMBRAL_AMBAR = 85, 70
 # Glosario: cada concepto se llama igual en todo el tablero.
-N_SECA = "Anatomía sin líquido en OCT"
+N_SECA = "Retina seca"
 N_ADH = "Adherencia a dosis de carga"
 N_CUMPL = "Cumplimiento de aplicaciones"
 N_EXT = "Extensión última dosis"
-N_ANAT = "Anatomía sin líquido en OCT"
+N_ANAT = "Retina seca"
 N_ECV1 = "Encuesta de calidad de vida 1"
 N_ECV2 = "Encuesta de calidad de vida 2"
 N_PAC = "Pacientes con maculopatía"
@@ -82,6 +82,23 @@ def cargar_aplicaciones(directorio: Path, llave: Optional[bytes] = None) -> Opti
     except (OSError, ValueError):
         return None
     return d[COLS_APL + [c for c in COLS_APL_ANIO if c in d.columns]] if all(c in d.columns for c in COLS_APL) else None
+
+
+def periodo_informacion(directorio: Path, llave: Optional[bytes] = None) -> Dict[str, Optional[pd.Timestamp]]:
+    """Primera y última fecha con información clínica en la corrida (aplicaciones y visitas de control), sobre todos los
+    datos, sin filtros. Solo informativo: no cambia ningún cálculo."""
+    fechas = []
+    for archivo, cols in (("oportunidad_apl.parquet", ["fecha_aplicacion"]),
+                          ("evolucion.parquet", ["fecha_primera_iny"] + [f"FechaVisita_sem{s}" for s in (12, 16, 20, 52, 104)])):
+        try:
+            d = seguridad.leer_parquet(Path(directorio) / archivo, llave)
+        except (OSError, ValueError):
+            continue
+        for c in cols:
+            if c in d.columns:
+                fechas.append(pd.to_datetime(d[c], errors="coerce").dropna())
+    todas = pd.concat(fechas) if fechas else pd.Series(dtype="datetime64[ns]")
+    return {"desde": todas.min() if len(todas) else None, "hasta": todas.max() if len(todas) else None}
 
 
 def cumplimiento_anios(apl: Optional[pd.DataFrame], ids) -> Dict[int, Tuple[float, int]]:
@@ -463,8 +480,8 @@ COMPLETITUD_RESULTADOS = [
     ("OCT", "OCT_sem16", "OCT S16", None),
     ("OCT", "OCT_sem52", "OCT S52", "anio1_completo"),
     ("OCT", "OCT_sem104", "OCT S104", "anio2_completo"),
-    ("OCT", "RetinaSeca_sem52", "Anatomía sin líquido S52", "anio1_completo"),
-    ("OCT", "RetinaSeca_sem104", "Anatomía sin líquido S104", "anio2_completo"),
+    ("OCT", "RetinaSeca_sem52", "Retina seca S52", "anio1_completo"),
+    ("OCT", "RetinaSeca_sem104", "Retina seca S104", "anio2_completo"),
     ("Proceso de atención", "Oportunidad_inicio_tto", "Oportunidad de inicio (días)", None),
     ("Proceso de atención", "Adherencia_final_12", "Adherencia a dosis de carga", None),
     ("Proceso de atención", "extension_ultima_dosis", "Extensión última dosis", None),
